@@ -1,6 +1,5 @@
 import 'package:app_flowy/plugins/grid/application/field/type_option/edit_select_option_bloc.dart';
 import 'package:app_flowy/plugins/grid/presentation/widgets/cell/select_option_cell/extension.dart';
-import 'package:app_flowy/workspace/application/appearance.dart';
 import 'package:flowy_infra/image.dart';
 import 'package:flowy_infra/size.dart';
 import 'package:flowy_infra_ui/style_widget/button.dart';
@@ -81,14 +80,16 @@ class _DeleteTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<AppearanceSettingsCubit>().state.theme;
     return SizedBox(
       height: GridSize.typeOptionItemHeight,
       child: FlowyButton(
         text: FlowyText.medium(LocaleKeys.grid_selectOption_deleteTag.tr(),
             fontSize: 12),
-        hoverColor: theme.hover,
-        leftIcon: svgWidget("grid/delete", color: theme.iconColor),
+        hoverColor: Theme.of(context).colorScheme.secondary,
+        leftIcon: svgWidget(
+          "grid/delete",
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
         onTap: () {
           context
               .read<EditSelectOptionBloc>()
@@ -127,7 +128,6 @@ class SelectOptionColorList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<AppearanceSettingsCubit>().state.theme;
     final cells = SelectOptionColorPB.values.map((color) {
       return _SelectOptionColorCell(
           color: color, isSelected: selectedColor == color);
@@ -145,7 +145,7 @@ class SelectOptionColorList extends StatelessWidget {
               LocaleKeys.grid_selectOption_colorPanelTitle.tr(),
               fontSize: FontSizes.s12,
               textAlign: TextAlign.left,
-              color: theme.shader3,
+              color: Theme.of(context).hintColor,
             ),
           ),
         ),
@@ -175,7 +175,6 @@ class _SelectOptionColorCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<AppearanceSettingsCubit>().state.theme;
     Widget? checkmark;
     if (isSelected) {
       checkmark = svgWidget("grid/checkmark");
@@ -195,7 +194,7 @@ class _SelectOptionColorCell extends StatelessWidget {
       height: GridSize.typeOptionItemHeight,
       child: FlowyButton(
         text: FlowyText.medium(color.optionName(), fontSize: 12),
-        hoverColor: theme.hover,
+        hoverColor: Theme.of(context).colorScheme.secondary,
         leftIcon: colorIcon,
         rightIcon: checkmark,
         onTap: () {

@@ -13,7 +13,6 @@ class SettingsLanguageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.watch<AppearanceSettingsCubit>().state.theme;
     return BlocBuilder<AppearanceSettingsCubit, AppearanceSettingsState>(
       builder: (context, state) => SingleChildScrollView(
         child: Column(
@@ -62,9 +61,6 @@ class _LanguageSelectorDropdownState extends State<LanguageSelectorDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<AppearanceSettingsCubit>().state.theme;
-    themedHoverColor = theme.main2;
-
     return MouseRegion(
       onEnter: (event) => {hoverEnterLanguage()},
       onExit: (event) => {hoverExitLanguage()},

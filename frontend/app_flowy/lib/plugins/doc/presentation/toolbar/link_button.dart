@@ -1,5 +1,6 @@
 import 'package:app_flowy/workspace/application/appearance.dart';
 import 'package:app_flowy/workspace/presentation/widgets/dialogs.dart';
+import 'package:flowy_infra/color_extension.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flowy_infra/image.dart';
 import 'package:flowy_infra_ui/style_widget/icon_button.dart';
@@ -67,7 +68,7 @@ class FlowyLinkStyleButtonState extends State<FlowyLinkStyleButton> {
       onPressed: pressedHandler,
       iconPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       icon: icon,
-      fillColor: theme.shader6,
+      fillColor: Theme.of(context).extension<CustomColors>()!.lightGreyHover!,
       hoverColor: theme.shader5,
       width: widget.iconSize * kIconButtonFactor,
     );

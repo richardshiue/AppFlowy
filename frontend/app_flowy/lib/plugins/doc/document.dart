@@ -172,7 +172,6 @@ class ShareActionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<AppearanceSettingsCubit>().state.theme;
     final docShareBloc = context.read<DocShareBloc>();
     return PopoverActionList<ShareActionWrapper>(
       direction: PopoverDirection.bottomWithCenterAligned,
@@ -184,7 +183,7 @@ class ShareActionList extends StatelessWidget {
           title: LocaleKeys.shareAction_buttonText.tr(),
           fontSize: FontSizes.s12,
           borderRadius: Corners.s6Border,
-          color: theme.main1,
+          color: Theme.of(context).colorScheme.primary,
           onPressed: () => controller.show(),
         );
       },

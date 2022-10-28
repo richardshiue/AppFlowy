@@ -153,7 +153,6 @@ class _BoardContentState extends State<BoardContent> {
           groupData.headerData.groupName,
           fontSize: 14,
           overflow: TextOverflow.clip,
-          color: context.watch<AppearanceSettingsCubit>().state.theme.textColor,
         ),
       ),
       icon: _buildHeaderIcon(boardCustomData),
@@ -162,7 +161,7 @@ class _BoardContentState extends State<BoardContent> {
         width: 20,
         child: svgWidget(
           "home/add",
-          color: context.watch<AppearanceSettingsCubit>().state.theme.iconColor,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       onAddButtonClick: () {
@@ -185,13 +184,12 @@ class _BoardContentState extends State<BoardContent> {
         width: 20,
         child: svgWidget(
           "home/add",
-          color: context.watch<AppearanceSettingsCubit>().state.theme.iconColor,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       title: FlowyText.medium(
         LocaleKeys.board_column_create_new_card.tr(),
         fontSize: 14,
-        color: context.watch<AppearanceSettingsCubit>().state.theme.textColor,
       ),
       height: 50,
       margin: config.footerPadding,
@@ -270,10 +268,12 @@ class _BoardContentState extends State<BoardContent> {
   }
 
   BoxDecoration _makeBoxDecoration(BuildContext context) {
-    final theme = context.watch<AppearanceSettingsCubit>().state.theme;
-    final borderSide = BorderSide(color: theme.shader6, width: 1.0);
+    final borderSide = BorderSide(
+      color: Theme.of(context).dividerColor,
+      width: 1.0,
+    );
     return BoxDecoration(
-      color: theme.surface,
+      color: Theme.of(context).colorScheme.surface,
       border: Border.fromBorderSide(borderSide),
       borderRadius: const BorderRadius.all(Radius.circular(6)),
     );
