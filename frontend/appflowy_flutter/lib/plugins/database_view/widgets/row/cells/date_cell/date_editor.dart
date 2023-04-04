@@ -22,6 +22,7 @@ import '../../../../grid/presentation/layout/sizes.dart';
 import '../../../../grid/presentation/widgets/common/type_option_separator.dart';
 import '../../../../grid/presentation/widgets/header/type_option/date.dart';
 import 'date_cal_bloc.dart';
+import 'date_cell_bloc.dart';
 
 final kFirstDay = DateTime.utc(1970, 1, 1);
 final kLastDay = DateTime.utc(2100, 1, 1);
@@ -110,14 +111,12 @@ class _CellCalendarWidgetState extends State<_CellCalendarWidget> {
       child: BlocBuilder<DateCellCalendarBloc, DateCellCalendarState>(
         buildWhen: (p, c) => p != c,
         builder: (context, state) {
-          bool includeTime = state.dateCellData
-              .fold(() => false, (dateData) => dateData.includeTime);
           List<Widget> children = [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: _buildCalendar(context),
             ),
-            if (includeTime) ...[
+            if (state.includeTime) ...[
               const VSpace(12.0),
               _TimeTextField(
                 bloc: context.read<DateCellCalendarBloc>(),
@@ -206,12 +205,8 @@ class _CellCalendarWidgetState extends State<_CellCalendarWidget> {
             outsideTextStyle:
                 textStyle.textColor(Theme.of(context).disabledColor),
           ),
-          selectedDayPredicate: (day) {
-            return state.dateCellData.fold(
-              () => false,
-              (dateData) => isSameDay(dateData.date, day),
-            );
-          },
+          selectedDayPredicate: (DateTime day) =>
+              isSameDay(state.dateTime, day),
           onDaySelected: (selectedDay, focusedDay) {
             context
                 .read<DateCellCalendarBloc>()
@@ -239,10 +234,7 @@ class _IncludeTimeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocSelector<DateCellCalendarBloc, DateCellCalendarState, bool>(
-      selector: (state) => state.dateCellData.fold(
-        () => false,
-        (dateData) => dateData.includeTime,
-      ),
+      selector: (state) => state.includeTime,
       builder: (context, includeTime) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -298,7 +290,8 @@ class _TimeTextFieldState extends State<_TimeTextField> {
   @override
   void initState() {
     _focusNode = FocusNode();
-    _controller = TextEditingController(text: widget.bloc.state.time);
+    _controller = TextEditingController(
+        text: timeStringFromDateTime(widget.bloc.state.dateTime));
 
     _focusNode.addListener(() {
       if (mounted) {
@@ -323,7 +316,7 @@ class _TimeTextFieldState extends State<_TimeTextField> {
 
   @override
   Widget build(BuildContext context) {
-    _controller.text = widget.bloc.state.time ?? "";
+    _controller.text = timeStringFromDateTime(widget.bloc.state.dateTime);
     _controller.selection =
         TextSelection.collapsed(offset: _controller.text.length);
     return Padding(
@@ -341,8 +334,7 @@ class _TimeTextFieldState extends State<_TimeTextField> {
           errorBorderColor: Theme.of(context).colorScheme.error,
           focusBorderColor: Theme.of(context).colorScheme.primary,
           cursorColor: Theme.of(context).colorScheme.primary,
-          errorText: widget.bloc.state.timeFormatError
-              .fold(() => "", (error) => error),
+          errorText: widget.bloc.state.timeFormatError ?? "",
           onEditingComplete: (value) =>
               widget.bloc.add(DateCellCalendarEvent.setTime(value)),
         ),

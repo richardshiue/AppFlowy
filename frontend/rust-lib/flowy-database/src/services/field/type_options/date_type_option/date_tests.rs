@@ -252,7 +252,6 @@ mod tests {
   ) {
     let changeset = DateCellChangeset {
       date: Some(timestamp.to_string()),
-      time: include_time_str,
       is_utc: false,
       include_time: Some(include_time),
     };
@@ -275,9 +274,7 @@ mod tests {
       .unwrap();
     let decoded_data = type_option.convert_to_protobuf(decoded_data);
     if include_time {
-      format!("{} {}", decoded_data.date, decoded_data.time)
-        .trim_end()
-        .to_owned()
+      format!("{}", decoded_data.date).trim_end().to_owned()
     } else {
       decoded_data.date
     }

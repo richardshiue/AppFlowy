@@ -18,12 +18,9 @@ pub struct DateCellDataPB {
   pub date: String,
 
   #[pb(index = 2)]
-  pub time: String,
-
-  #[pb(index = 3)]
   pub timestamp: i64,
 
-  #[pb(index = 4)]
+  #[pb(index = 3)]
   pub include_time: bool,
 }
 
@@ -36,19 +33,15 @@ pub struct DateChangesetPB {
   pub date: Option<String>,
 
   #[pb(index = 3, one_of)]
-  pub time: Option<String>,
-
-  #[pb(index = 4, one_of)]
   pub include_time: Option<bool>,
 
-  #[pb(index = 5)]
+  #[pb(index = 4)]
   pub is_utc: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DateCellChangeset {
   pub date: Option<String>,
-  pub time: Option<String>,
   pub include_time: Option<bool>,
   pub is_utc: bool,
 }
@@ -139,7 +132,7 @@ impl<'de> serde::Deserialize<'de> for DateCellData {
           }
         }
 
-        let include_time = include_time.unwrap_or(false);
+        let include_time = include_time.unwrap_or_default();
 
         Ok(DateCellData {
           timestamp,

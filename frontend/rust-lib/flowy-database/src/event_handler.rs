@@ -516,7 +516,6 @@ pub(crate) async fn update_date_cell_handler(
   let cell_path: CellIdParams = data.cell_path.try_into()?;
   let cell_changeset = DateCellChangeset {
     date: data.date,
-    time: data.time,
     include_time: data.include_time,
     is_utc: data.is_utc,
   };

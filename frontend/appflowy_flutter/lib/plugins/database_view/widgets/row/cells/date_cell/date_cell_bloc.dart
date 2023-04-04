@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:appflowy/plugins/database_view/application/cell/cell_controller_builder.dart';
 import 'package:appflowy/plugins/database_view/application/field/field_controller.dart';
 import 'package:appflowy_backend/protobuf/flowy-database/date_type_option_entities.pb.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'dart:async';
+import 'package:intl/intl.dart' as intl;
+
 part 'date_cell_bloc.freezed.dart';
 
 class DateCellBloc extends Bloc<DateCellEvent, DateCellState> {
@@ -17,8 +20,16 @@ class DateCellBloc extends Bloc<DateCellEvent, DateCellState> {
         event.when(
           initial: () => _startListening(),
           didReceiveCellUpdate: (DateCellDataPB? cellData) {
+            int timestamp = 0;
+            bool includeTime = false;
+            if (cellData != null) {
+              timestamp = cellData.timestamp.toInt() * 1000;
+              includeTime = cellData.includeTime;
+            }
             emit(state.copyWith(
-                data: cellData, dateStr: _dateStrFromCellData(cellData)));
+              dateTime: DateTime.fromMillisecondsSinceEpoch(timestamp),
+              includeTime: includeTime,
+            ));
           },
         );
       },
@@ -56,26 +67,41 @@ class DateCellEvent with _$DateCellEvent {
 @freezed
 class DateCellState with _$DateCellState {
   const factory DateCellState({
-    required DateCellDataPB? data,
-    required String dateStr,
+    required DateTime? dateTime,
+    required bool includeTime,
     required FieldInfo fieldInfo,
   }) = _DateCellState;
 
   factory DateCellState.initial(DateCellController context) {
     final cellData = context.getCellData();
 
+    if (cellData == null) {
+      return DateCellState(
+        fieldInfo: context.fieldInfo,
+        dateTime: null,
+        includeTime: false,
+      );
+    }
+
+    final timestamp = cellData.timestamp.toInt() * 1000;
     return DateCellState(
       fieldInfo: context.fieldInfo,
-      data: cellData,
-      dateStr: _dateStrFromCellData(cellData),
+      dateTime: DateTime.fromMillisecondsSinceEpoch(timestamp),
+      includeTime: cellData.includeTime,
     );
   }
 }
 
-String _dateStrFromCellData(DateCellDataPB? cellData) {
-  String dateStr = "";
-  if (cellData != null) {
-    dateStr = "${cellData.date} ${cellData.time}";
+String dateStringFromDateTime(DateTime? dateTime) {
+  if (dateTime == null) {
+    return "";
   }
-  return dateStr;
+  return intl.DateFormat.yMMMMd('en_US').format(dateTime);
+}
+
+String timeStringFromDateTime(DateTime? dateTime) {
+  if (dateTime == null) {
+    return "";
+  }
+  return intl.DateFormat.jm('en_US').format(dateTime);
 }

@@ -8,10 +8,9 @@ use crate::services::field::{
 };
 use bytes::Bytes;
 use chrono::format::strftime::StrftimeItems;
-use chrono::NaiveDateTime;
 use database_model::{FieldRevision, TypeOptionDataDeserializer, TypeOptionDataSerializer};
 use flowy_derive::ProtoBuf;
-use flowy_error::{ErrorCode, FlowyError, FlowyResult};
+use flowy_error::FlowyResult;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -62,54 +61,24 @@ impl DateTypeOptionPB {
     let timestamp = cell_data.timestamp.unwrap_or_default();
     let include_time = cell_data.include_time;
 
-    let naive = chrono::NaiveDateTime::from_timestamp_opt(timestamp, 0);
-    if naive.is_none() {
-      return DateCellDataPB::default();
-    }
-    let naive = naive.unwrap();
     if timestamp == 0 {
       return DateCellDataPB::default();
     }
-    let fmt = self.date_format.format_str();
-    let date = format!("{}", naive.format_with_items(StrftimeItems::new(fmt)));
 
-    let time = if include_time {
-      let fmt = self.time_format.format_str();
-      format!("{}", naive.format_with_items(StrftimeItems::new(fmt)))
-    } else {
-      "".to_string()
-    };
+    let naive = chrono::NaiveDateTime::from_timestamp_opt(timestamp, 0);
+    match naive {
+      None => DateCellDataPB::default(),
+      Some(naive) => {
+        let fmt = self.date_format.format_str();
+        let date = format!("{}", naive.format_with_items(StrftimeItems::new(fmt)));
 
-    DateCellDataPB {
-      date,
-      time,
-      include_time,
-      timestamp,
+        DateCellDataPB {
+          date,
+          timestamp,
+          include_time,
+        }
+      },
     }
-  }
-
-  fn timestamp_from_utc_with_time(
-    &self,
-    naive_date: &NaiveDateTime,
-    time_str: &Option<String>,
-  ) -> FlowyResult<i64> {
-    if let Some(time_str) = time_str.as_ref() {
-      if !time_str.is_empty() {
-        let naive_time = chrono::NaiveTime::parse_from_str(time_str, self.time_format.format_str());
-
-        match naive_time {
-          Ok(naive_time) => {
-            return Ok(naive_date.date().and_time(naive_time).timestamp());
-          },
-          Err(_e) => {
-            let msg = format!("Parse {} failed", time_str);
-            return Err(FlowyError::new(ErrorCode::InvalidDateTimeFormat, &msg));
-          },
-        };
-      }
-    }
-
-    Ok(naive_date.timestamp())
   }
 }
 
@@ -152,26 +121,14 @@ impl CellDataChangeset for DateTypeOptionPB {
       },
     };
 
+    let timestamp = match changeset.date_timestamp() {
+      None => timestamp,
+      Some(timestamp) => Some(timestamp),
+    };
     let include_time = match changeset.include_time {
       None => include_time,
       Some(include_time) => include_time,
     };
-    let timestamp = match changeset.date_timestamp() {
-      None => timestamp,
-      Some(date_timestamp) => match (include_time, changeset.time) {
-        (true, Some(time)) => {
-          let time = Some(time.trim().to_uppercase());
-          let naive = NaiveDateTime::from_timestamp_opt(date_timestamp, 0);
-          if let Some(naive) = naive {
-            Some(self.timestamp_from_utc_with_time(&naive, &time)?)
-          } else {
-            Some(date_timestamp)
-          }
-        },
-        _ => Some(date_timestamp),
-      },
-    };
-
     let date_cell_data = DateCellData {
       timestamp,
       include_time,

@@ -75,7 +75,7 @@ class _DateCellState extends GridCellState<GridDateCell> {
                 child: Padding(
                   padding: GridSize.cellContentInsets,
                   child: FlowyText.medium(
-                    state.dateStr,
+                    dateStringFromDateTime(state.dateTime),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -110,5 +110,5 @@ class _DateCellState extends GridCellState<GridDateCell> {
   }
 
   @override
-  String? onCopy() => _cellBloc.state.dateStr;
+  String? onCopy() => dateStringFromDateTime(_cellBloc.state.dateTime);
 }
