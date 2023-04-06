@@ -4,15 +4,16 @@ import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/plugins/database_view/application/cell/cell_controller_builder.dart';
 import 'package:appflowy/plugins/database_view/application/cell/cell_service.dart';
 import 'package:appflowy/plugins/database_view/application/field/field_service.dart';
+import 'package:dartz/dartz.dart';
 import 'package:easy_localization/easy_localization.dart'
     show StringTranslateExtension;
 import 'package:appflowy_backend/log.dart';
 import 'package:appflowy_backend/protobuf/flowy-error/code.pb.dart';
-import 'package:appflowy_backend/protobuf/flowy-error/errors.pb.dart';
 import 'package:appflowy_backend/protobuf/flowy-database/date_type_option.pb.dart';
 import 'package:appflowy_backend/protobuf/flowy-database/date_type_option_entities.pb.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:table_calendar/table_calendar.dart';
 import 'package:protobuf/protobuf.dart';
 
@@ -74,6 +75,28 @@ class DateCellCalendarBloc
     );
   }
 
+  Either<DateTime, String> _parseTimeString(String timeString) {
+    Either<DateTime, String> result;
+
+    intl.DateFormat format = intl.DateFormat.jm('en_US');
+    switch (state.dateTypeOptionPB.timeFormat) {
+      case TimeFormat.TwelveHour:
+        format = intl.DateFormat.jm('en_US');
+        break;
+      case TimeFormat.TwentyFourHour:
+        format = intl.DateFormat.Hm('en_US');
+        break;
+    }
+    try {
+      DateTime time = format.parseLoose(timeString);
+      result = left(time);
+    } on FormatException catch (_) {
+      result = right(timeFormatPrompt());
+    }
+
+    return result;
+  }
+
   Future<void> _updateDateData(Emitter<DateCellCalendarState> emit,
       {DateTime? date, String? time, bool? includeTime}) {
     DateTime? newDateTime;
@@ -95,18 +118,33 @@ class DateCellCalendarBloc
     }
 
     if (time != null) {
-      newDateTime = DateTime.now();
-      if (state.dateTime != null) {
-        newDateTime = state.dateTime;
-      }
-      newDateTime = DateTime(
-        newDateTime!.year,
-        newDateTime.month,
-        newDateTime.day,
+      final parseResults = _parseTimeString(time);
+      newDateTime = parseResults.fold(
+        (time) {
+          if (state.dateTime == null) {
+            final now = DateTime.now();
+            return DateTime(
+              now.year,
+              now.month,
+              now.day,
+              time.hour,
+              time.minute,
+            );
+          } else {
+            return DateTime(
+              state.dateTime!.year,
+              state.dateTime!.month,
+              state.dateTime!.day,
+              time.hour,
+              time.minute,
+            );
+          }
+        },
+        (err) {
+          add(DateCellCalendarEvent.didReceiveTimeFormatError(err));
+          return state.dateTime;
+        },
       );
-      // parse time string
-      // const time = Duration(hours: 20);
-      // newDateTime.add(time);
     }
 
     if (includeTime != null) {
@@ -121,33 +159,11 @@ class DateCellCalendarBloc
     DateTime? dateTime,
     bool includeTime,
   ) async {
-    updateCalData(String? timeFormatError) {
-      if (!isClosed && timeFormatError != null) {
-        add(DateCellCalendarEvent.didReceiveTimeFormatError(timeFormatError));
-      }
-    }
-
-    cellController.saveCellData(
-      DateCellData(
-          dateTime: dateTime ?? state.dateTime, includeTime: includeTime),
-      onFinish: (result) {
-        result.fold(
-          () => updateCalData(null),
-          (err) {
-            switch (ErrorCode.valueOf(err.code)!) {
-              case ErrorCode.InvalidDateTimeFormat:
-                updateCalData(timeFormatPrompt(err));
-                break;
-              default:
-                Log.error(err);
-            }
-          },
-        );
-      },
-    );
+    cellController.saveCellData(DateCellData(
+        dateTime: dateTime ?? state.dateTime, includeTime: includeTime));
   }
 
-  String timeFormatPrompt(FlowyError error) {
+  String timeFormatPrompt() {
     String msg = "${LocaleKeys.grid_field_invalidTimeFormat.tr()}.";
     switch (state.dateTypeOptionPB.timeFormat) {
       case TimeFormat.TwelveHour:

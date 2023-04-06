@@ -92,16 +92,38 @@ class DateCellState with _$DateCellState {
   }
 }
 
-String dateStringFromDateTime(DateTime? dateTime) {
+String dateStringFromDateTime(DateTime? dateTime, DateFormat dateFormat) {
   if (dateTime == null) {
     return "";
   }
-  return intl.DateFormat.yMMMMd('en_US').format(dateTime);
+  intl.DateFormat pattern = intl.DateFormat.yMMMMd('en_US');
+  switch (dateFormat) {
+    case DateFormat.Friendly:
+      break;
+    case DateFormat.ISO:
+      pattern = intl.DateFormat.yMMMd('en_US');
+      break;
+    case DateFormat.Local:
+      pattern = intl.DateFormat.yMd('en_US');
+      break;
+    case DateFormat.US:
+      pattern = intl.DateFormat.yMMMMEEEEd('en_US');
+      break;
+  }
+  return pattern.format(dateTime);
 }
 
-String timeStringFromDateTime(DateTime? dateTime) {
+String timeStringFromDateTime(DateTime? dateTime, TimeFormat timeFormat) {
   if (dateTime == null) {
     return "";
   }
-  return intl.DateFormat.jm('en_US').format(dateTime);
+  intl.DateFormat pattern = intl.DateFormat.jm('en_US');
+  switch (timeFormat) {
+    case TimeFormat.TwelveHour:
+      break;
+    case TimeFormat.TwentyFourHour:
+      pattern = intl.DateFormat.Hm('en_US');
+      break;
+  }
+  return pattern.format(dateTime);
 }

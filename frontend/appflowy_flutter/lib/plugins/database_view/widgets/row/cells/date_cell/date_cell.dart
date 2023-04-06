@@ -1,4 +1,5 @@
 import 'package:appflowy/plugins/database_view/application/cell/cell_controller_builder.dart';
+import 'package:appflowy_backend/protobuf/flowy-database/date_type_option_entities.pbenum.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,7 +76,7 @@ class _DateCellState extends GridCellState<GridDateCell> {
                 child: Padding(
                   padding: GridSize.cellContentInsets,
                   child: FlowyText.medium(
-                    dateStringFromDateTime(state.dateTime),
+                    dateStringFromDateTime(state.dateTime, DateFormat.ISO),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -110,5 +111,6 @@ class _DateCellState extends GridCellState<GridDateCell> {
   }
 
   @override
-  String? onCopy() => dateStringFromDateTime(_cellBloc.state.dateTime);
+  String? onCopy() =>
+      dateStringFromDateTime(_cellBloc.state.dateTime, DateFormat.Friendly);
 }

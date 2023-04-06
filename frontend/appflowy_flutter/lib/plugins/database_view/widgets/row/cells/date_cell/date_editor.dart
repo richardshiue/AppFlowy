@@ -290,8 +290,7 @@ class _TimeTextFieldState extends State<_TimeTextField> {
   @override
   void initState() {
     _focusNode = FocusNode();
-    _controller = TextEditingController(
-        text: timeStringFromDateTime(widget.bloc.state.dateTime));
+    _controller = TextEditingController();
 
     _focusNode.addListener(() {
       if (mounted) {
@@ -316,7 +315,9 @@ class _TimeTextFieldState extends State<_TimeTextField> {
 
   @override
   Widget build(BuildContext context) {
-    _controller.text = timeStringFromDateTime(widget.bloc.state.dateTime);
+    final state = widget.bloc.state;
+    _controller.text = timeStringFromDateTime(
+        state.dateTime, state.dateTypeOptionPB.timeFormat);
     _controller.selection =
         TextSelection.collapsed(offset: _controller.text.length);
     return Padding(
