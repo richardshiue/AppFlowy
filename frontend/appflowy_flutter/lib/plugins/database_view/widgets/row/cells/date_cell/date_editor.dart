@@ -10,7 +10,6 @@ import 'package:flowy_infra/theme_extension.dart';
 import 'package:flowy_infra/image.dart';
 import 'package:flowy_infra/size.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';
-import 'package:flowy_infra_ui/widget/rounded_input_field.dart';
 import 'package:appflowy_backend/log.dart';
 import 'package:appflowy_backend/protobuf/flowy-error/errors.pbserver.dart';
 import 'package:appflowy_backend/protobuf/flowy-database/date_type_option.pb.dart';
@@ -290,13 +289,6 @@ class _TimeTextFieldState extends State<_TimeTextField> {
   @override
   void initState() {
     _focusNode = FocusNode();
-    _controller = TextEditingController();
-
-    _focusNode.addListener(() {
-      if (mounted) {
-        widget.bloc.add(DateCellCalendarEvent.setTime(_controller.text));
-      }
-    });
 
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
@@ -316,27 +308,18 @@ class _TimeTextFieldState extends State<_TimeTextField> {
   @override
   Widget build(BuildContext context) {
     final state = widget.bloc.state;
-    _controller.text = timeStringFromDateTime(
-        state.dateTime, state.dateTypeOptionPB.timeFormat);
-    _controller.selection =
-        TextSelection.collapsed(offset: _controller.text.length);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Padding(
         padding: GridSize.typeOptionContentInsets,
-        child: RoundedInputField(
-          height: GridSize.popoverItemHeight,
+        child: FlowyTextField(
           focusNode: _focusNode,
-          autoFocus: true,
+          text: timeStringFromDateTime(
+              state.dateTime, state.dateTypeOptionPB.timeFormat),
+          submitOnLeave: true,
           hintText: widget.bloc.state.timeHintText,
-          controller: _controller,
-          style: Theme.of(context).textTheme.bodyMedium!,
-          normalBorderColor: Theme.of(context).colorScheme.outline,
-          errorBorderColor: Theme.of(context).colorScheme.error,
-          focusBorderColor: Theme.of(context).colorScheme.primary,
-          cursorColor: Theme.of(context).colorScheme.primary,
-          errorText: widget.bloc.state.timeFormatError ?? "",
-          onEditingComplete: (value) =>
+          errorText: widget.bloc.state.timeFormatError,
+          onSubmitted: (value) =>
               widget.bloc.add(DateCellCalendarEvent.setTime(value)),
         ),
       ),
@@ -345,7 +328,6 @@ class _TimeTextFieldState extends State<_TimeTextField> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
     super.dispose();
   }
 }
