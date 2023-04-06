@@ -51,7 +51,7 @@ class _DateCellState extends GridCellState<GridDateCell> {
     final cellController =
         widget.cellControllerBuilder.build() as DateCellController;
     _cellBloc = DateCellBloc(cellController: cellController)
-      ..add(const DateCellEvent.initial());
+      ..add(DateCellEvent.initial(cellController));
     super.initState();
   }
 
@@ -64,6 +64,17 @@ class _DateCellState extends GridCellState<GridDateCell> {
       value: _cellBloc,
       child: BlocBuilder<DateCellBloc, DateCellState>(
         builder: (context, state) {
+          final dateStr = dateStringFromDateTime(
+              state.dateTime, state.typeOption?.dateFormat);
+          final timeStr = timeStringFromDateTime(
+              state.dateTime, state.typeOption?.timeFormat);
+          String dateCellStr = "";
+          if (state.includeTime) {
+            dateCellStr = "$dateStr $timeStr";
+          } else {
+            dateCellStr = dateStr;
+          }
+
           return AppFlowyPopover(
             controller: _popover,
             triggerActions: PopoverTriggerFlags.none,
@@ -76,7 +87,7 @@ class _DateCellState extends GridCellState<GridDateCell> {
                 child: Padding(
                   padding: GridSize.cellContentInsets,
                   child: FlowyText.medium(
-                    dateStringFromDateTime(state.dateTime, DateFormat.ISO),
+                    dateCellStr,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

@@ -1,8 +1,14 @@
 import 'dart:async';
 
+import 'package:appflowy/plugins/database_view/application/cell/cell_controller.dart';
 import 'package:appflowy/plugins/database_view/application/cell/cell_controller_builder.dart';
+import 'package:appflowy/plugins/database_view/application/cell/cell_service.dart';
 import 'package:appflowy/plugins/database_view/application/field/field_controller.dart';
+import 'package:appflowy/plugins/database_view/application/field/type_option/type_option_context.dart';
+import 'package:appflowy_backend/protobuf/flowy-database/date_type_option.pb.dart';
 import 'package:appflowy_backend/protobuf/flowy-database/date_type_option_entities.pb.dart';
+import 'package:appflowy_backend/protobuf/flowy-error/errors.pb.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart' as intl;
@@ -17,8 +23,12 @@ class DateCellBloc extends Bloc<DateCellEvent, DateCellState> {
       : super(DateCellState.initial(cellController)) {
     on<DateCellEvent>(
       (event, emit) async {
-        event.when(
-          initial: () => _startListening(),
+        await event.when(
+          initial: (cellController) async {
+            _startListening();
+            final typeOption = await _getTypeOption(cellController);
+            emit(state.copyWith(typeOption: typeOption));
+          },
           didReceiveCellUpdate: (DateCellDataPB? cellData) {
             int timestamp = 0;
             bool includeTime = false;
@@ -30,6 +40,10 @@ class DateCellBloc extends Bloc<DateCellEvent, DateCellState> {
               dateTime: DateTime.fromMillisecondsSinceEpoch(timestamp),
               includeTime: includeTime,
             ));
+          },
+          didReceiveFieldUpdate: () async {
+            final typeOption = await _getTypeOption(cellController);
+            emit(state.copyWith(typeOption: typeOption));
           },
         );
       },
@@ -48,20 +62,38 @@ class DateCellBloc extends Bloc<DateCellEvent, DateCellState> {
 
   void _startListening() {
     _onCellChangedFn = cellController.startListening(
-      onCellChanged: ((data) {
+      onCellChanged: (data) {
         if (!isClosed) {
           add(DateCellEvent.didReceiveCellUpdate(data));
         }
-      }),
+      },
+      onCellFieldChanged: () {
+        if (!isClosed) {
+          add(const DateCellEvent.didReceiveFieldUpdate());
+        }
+      },
+    );
+  }
+
+  Future<DateTypeOptionPB?> _getTypeOption(
+    DateCellController cellController,
+  ) async {
+    Either<DateTypeOptionPB, FlowyError> typeOption =
+        await cellController.getTypeOption(DateTypeOptionDataParser());
+    return typeOption.fold(
+      (typeOption) => typeOption,
+      (r) => null,
     );
   }
 }
 
 @freezed
 class DateCellEvent with _$DateCellEvent {
-  const factory DateCellEvent.initial() = _InitialCell;
+  const factory DateCellEvent.initial(DateCellController cellController) =
+      _InitialCell;
   const factory DateCellEvent.didReceiveCellUpdate(DateCellDataPB? data) =
       _DidReceiveCellUpdate;
+  const factory DateCellEvent.didReceiveFieldUpdate() = _DidReceiveFieldUpdate;
 }
 
 @freezed
@@ -70,6 +102,7 @@ class DateCellState with _$DateCellState {
     required DateTime? dateTime,
     required bool includeTime,
     required FieldInfo fieldInfo,
+    required DateTypeOptionPB? typeOption,
   }) = _DateCellState;
 
   factory DateCellState.initial(DateCellController context) {
@@ -77,23 +110,25 @@ class DateCellState with _$DateCellState {
 
     if (cellData == null) {
       return DateCellState(
-        fieldInfo: context.fieldInfo,
         dateTime: null,
         includeTime: false,
+        fieldInfo: context.fieldInfo,
+        typeOption: null,
       );
     }
 
     final timestamp = cellData.timestamp.toInt() * 1000;
     return DateCellState(
-      fieldInfo: context.fieldInfo,
       dateTime: DateTime.fromMillisecondsSinceEpoch(timestamp),
       includeTime: cellData.includeTime,
+      fieldInfo: context.fieldInfo,
+      typeOption: null,
     );
   }
 }
 
-String dateStringFromDateTime(DateTime? dateTime, DateFormat dateFormat) {
-  if (dateTime == null) {
+String dateStringFromDateTime(DateTime? dateTime, DateFormat? dateFormat) {
+  if (dateTime == null || dateFormat == null) {
     return "";
   }
   intl.DateFormat pattern = intl.DateFormat.yMMMMd('en_US');
@@ -113,8 +148,8 @@ String dateStringFromDateTime(DateTime? dateTime, DateFormat dateFormat) {
   return pattern.format(dateTime);
 }
 
-String timeStringFromDateTime(DateTime? dateTime, TimeFormat timeFormat) {
-  if (dateTime == null) {
+String timeStringFromDateTime(DateTime? dateTime, TimeFormat? timeFormat) {
+  if (dateTime == null || timeFormat == null) {
     return "";
   }
   intl.DateFormat pattern = intl.DateFormat.jm('en_US');
