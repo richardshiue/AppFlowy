@@ -84,22 +84,25 @@ class _MobileRowDetailPageState extends State<MobileRowDetailPage> {
             if (state.isLoading) {
               return const SizedBox.shrink();
             }
-            return PageView.builder(
-              controller: _pageController,
-              onPageChanged: (page) {
-                final rowId = _bloc.state.rowInfos[page].rowId;
-                _bloc.add(MobileRowDetailEvent.changeRowId(rowId));
-              },
-              itemCount: state.rowInfos.length,
-              itemBuilder: (context, index) {
-                if (state.rowInfos.isEmpty || state.currentRowId == null) {
-                  return const SizedBox.shrink();
-                }
-                return MobileRowDetailPageContent(
-                  databaseController: widget.databaseController,
-                  rowMeta: state.rowInfos[index].rowMeta,
-                );
-              },
+            return Hero(
+              tag: "rawr",
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (page) {
+                  final rowId = _bloc.state.rowInfos[page].rowId;
+                  _bloc.add(MobileRowDetailEvent.changeRowId(rowId));
+                },
+                itemCount: state.rowInfos.length,
+                itemBuilder: (context, index) {
+                  if (state.rowInfos.isEmpty || state.currentRowId == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return MobileRowDetailPageContent(
+                    databaseController: widget.databaseController,
+                    rowMeta: state.rowInfos[index].rowMeta,
+                  );
+                },
+              ),
             );
           },
         ),

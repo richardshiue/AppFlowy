@@ -1,6 +1,7 @@
 import 'package:appflowy/mobile/presentation/database/board/mobile_board_screen.dart';
 import 'package:appflowy/mobile/presentation/database/card/card.dart';
 import 'package:appflowy/mobile/presentation/database/date_picker/mobile_date_picker_screen.dart';
+import 'package:appflowy/mobile/presentation/database/card/card_detail/mobile_card_detail_screen_copy.dart';
 import 'package:appflowy/mobile/presentation/database/field/mobile_create_field_screen.dart';
 import 'package:appflowy/mobile/presentation/database/field/mobile_edit_field_screen.dart';
 import 'package:appflowy/mobile/presentation/database/mobile_calendar_events_screen.dart';
@@ -57,6 +58,7 @@ GoRouter generateRouter(Widget child) {
         _mobileCalendarScreenRoute(),
         // card detail page
         _mobileCardDetailScreenRoute(),
+        _mobileCardDetailScreenRoute2(),
         _mobileDateCellEditScreenRoute(),
         _mobileNewPropertyPageRoute(),
         _mobileEditPropertyPageRoute(),
@@ -531,8 +533,48 @@ GoRoute _mobileCardDetailScreenRoute() {
           args[MobileRowDetailPage.argDatabaseController];
       final rowId = args[MobileRowDetailPage.argRowId]!;
 
-      return MaterialPage(
+      return CustomTransitionPage(
+        transitionsBuilder: (_, animationFrom, animationTo, child) {
+          final tween = Tween(begin: 0.0, end: 1.0);
+          final offsetAnimation = animationFrom.drive(tween);
+          return FadeTransition(opacity: offsetAnimation, child: child);
+        },
+        fullscreenDialog: true,
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: const Color(0x311F2329),
         child: MobileRowDetailPage(
+          databaseController: databaseController,
+          rowId: rowId,
+        ),
+      );
+    },
+  );
+}
+
+GoRoute _mobileCardDetailScreenRoute2() {
+  return GoRoute(
+    parentNavigatorKey: AppGlobals.rootNavKey,
+    path: MobileRowDetailPage2.routeName,
+    pageBuilder: (context, state) {
+      final args = state.extra as Map<String, dynamic>;
+      final databaseController =
+          args[MobileRowDetailPage2.argDatabaseController];
+      final rowId = args[MobileRowDetailPage2.argRowId]!;
+
+      return CustomTransitionPage(
+        transitionsBuilder: (_, animationFrom, animationTo, child) {
+          const begin = Offset(0.0, 1.0);
+          const end = Offset.zero;
+          final tween = Tween(begin: begin, end: end);
+          final offsetAnimation = animationFrom.drive(tween);
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+        fullscreenDialog: true,
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: const Color(0x311F2329),
+        child: MobileRowDetailPage2(
           databaseController: databaseController,
           rowId: rowId,
         ),

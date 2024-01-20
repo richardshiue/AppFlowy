@@ -1,6 +1,7 @@
 import 'package:appflowy/generated/flowy_svgs.g.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/mobile/presentation/database/card/card_detail/mobile_card_detail_screen.dart';
+import 'package:appflowy/mobile/presentation/database/card/card_detail/mobile_card_detail_screen_copy.dart';
 import 'package:appflowy/plugins/database/application/database_controller.dart';
 import 'package:appflowy/plugins/database/application/field/field_info.dart';
 import 'package:appflowy/plugins/database/application/row/row_service.dart';
@@ -315,10 +316,10 @@ class _GridRows extends StatelessWidget {
       databaseController: databaseController,
       openDetailPage: (context) {
         context.push(
-          MobileRowDetailPage.routeName,
+          MobileRowDetailPage2.routeName,
           extra: {
-            MobileRowDetailPage.argRowId: rowId,
-            MobileRowDetailPage.argDatabaseController: databaseController,
+            MobileRowDetailPage2.argRowId: rowId,
+            MobileRowDetailPage2.argDatabaseController: databaseController,
           },
         );
       },
