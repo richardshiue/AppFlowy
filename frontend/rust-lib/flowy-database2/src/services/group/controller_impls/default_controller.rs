@@ -35,7 +35,7 @@ impl DefaultGroupController {
 
 #[async_trait]
 impl GroupController for DefaultGroupController {
-  fn field_id(&self) -> &str {
+  fn get_grouping_field_id(&self) -> &str {
     &self.field_id
   }
 

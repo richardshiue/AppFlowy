@@ -97,7 +97,7 @@ pub trait GroupCustomize: Send + Sync {
 ///
 pub trait GroupController: Send + Sync {
   /// Returns the id of field that is being used to group the rows
-  fn field_id(&self) -> &str;
+  fn get_grouping_field_id(&self) -> &str;
 
   /// Returns all of the groups currently managed by the controller
   fn get_all_groups(&self) -> Vec<&GroupData>;

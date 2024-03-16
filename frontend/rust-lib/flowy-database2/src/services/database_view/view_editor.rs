@@ -142,7 +142,7 @@ impl DatabaseViewEditor {
       if let Some(controller) = self.group_controller.read().await.as_ref() {
         let field = self
           .delegate
-          .get_field(controller.field_id())
+          .get_field(controller.get_grouping_field_id())
           .ok_or_else(|| FlowyError::internal().with_context("Failed to get grouping field"))?;
         controller.will_create_row(&mut cells, &field, &group_id);
       }
@@ -376,7 +376,7 @@ impl DatabaseViewEditor {
 
   pub async fn is_grouping_field(&self, field_id: &str) -> bool {
     match self.group_controller.read().await.as_ref() {
-      Some(group_controller) => group_controller.field_id() == field_id,
+      Some(group_controller) => group_controller.get_grouping_field_id() == field_id,
       None => false,
     }
   }
@@ -399,7 +399,7 @@ impl DatabaseViewEditor {
     let mut old_field: Option<Field> = None;
     let result = if let Some(controller) = self.group_controller.write().await.as_mut() {
       let create_group_results = controller.create_group(name.to_string())?;
-      old_field = self.delegate.get_field(controller.field_id());
+      old_field = self.delegate.get_field(controller.get_grouping_field_id());
       create_group_results
     } else {
       (None, None)
@@ -432,7 +432,7 @@ impl DatabaseViewEditor {
       None => return Ok(RowsChangePB::default()),
     };
 
-    let old_field = self.delegate.get_field(controller.field_id());
+    let old_field = self.delegate.get_field(controller.get_grouping_field_id());
     let (row_ids, type_option_data) = controller.delete_group(group_id)?;
 
     drop(group_controller);
@@ -465,7 +465,7 @@ impl DatabaseViewEditor {
     let mut type_option_data = TypeOptionData::new();
     let (old_field, updated_groups) =
       if let Some(controller) = self.group_controller.write().await.as_mut() {
-        let old_field = self.delegate.get_field(controller.field_id());
+        let old_field = self.delegate.get_field(controller.get_grouping_field_id());
         let (updated_groups, new_type_option) = controller.apply_group_changeset(&changeset)?;
         type_option_data.extend(new_type_option);
 
@@ -1019,7 +1019,7 @@ impl DatabaseViewEditor {
       .read()
       .await
       .as_ref()
-      .map(|group| group.field_id().to_owned())?;
+      .map(|group| group.get_grouping_field_id().to_owned())?;
     let field = self.delegate.get_field(&group_field_id)?;
     let mut write_guard = self.group_controller.write().await;
     if let Some(group_controller) = &mut *write_guard {

@@ -159,7 +159,7 @@ where
   G: GroupsBuilder<Context = GroupControllerContext<C>, GroupTypeOption = T>,
   Self: GroupCustomize<GroupTypeOption = T>,
 {
-  fn field_id(&self) -> &str {
+  fn get_grouping_field_id(&self) -> &str {
     &self.grouping_field_id
   }
 
@@ -376,7 +376,7 @@ where
   }
 
   fn delete_group(&mut self, group_id: &str) -> FlowyResult<(Vec<RowId>, Option<TypeOptionData>)> {
-    let group = if group_id != self.field_id() {
+    let group = if group_id != self.get_grouping_field_id() {
       self.get_group(group_id)
     } else {
       None
