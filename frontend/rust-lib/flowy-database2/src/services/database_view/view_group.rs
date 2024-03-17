@@ -72,11 +72,8 @@ impl GroupContextDelegate for GroupControllerDelegateImpl {
     })
   }
 
-  fn get_configuration_cells(&self, view_id: &str, field_id: &str) -> Fut<Vec<RowSingleCellData>> {
-    let field_id = field_id.to_owned();
-    let view_id = view_id.to_owned();
-    let delegate = self.0.clone();
-    to_fut(async move { get_cells_for_field(delegate, &view_id, &field_id).await })
+  async fn get_configuration_cells(&self, view_id: &str, field_id: &str) -> Vec<RowSingleCellData> {
+    get_cells_for_field(self.0.clone(), view_id, field_id)
   }
 
   fn save_configuration(&self, view_id: &str, group_setting: GroupSetting) -> Fut<FlowyResult<()>> {
