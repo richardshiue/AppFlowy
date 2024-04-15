@@ -14,9 +14,10 @@ use flowy_folder::manager::{FolderManager, FolderUser};
 use flowy_folder::share::ImportType;
 use flowy_folder::view_operation::{FolderOperationHandler, FolderOperationHandlers, View};
 use flowy_folder::ViewLayout;
-use flowy_folder_pub::folder_builder::NestedViewBuilder;
+use flowy_folder_pub::folder_builder::WorkspaceViewBuilder;
 use flowy_search::folder::indexer::FolderIndexManagerImpl;
 use flowy_user::services::authenticate_user::AuthenticateUser;
+
 use lib_dispatch::prelude::ToBytes;
 use lib_infra::async_trait::async_trait;
 use lib_infra::future::FutureResult;
@@ -100,7 +101,7 @@ impl FolderOperationHandler for DocumentFolderOperation {
   fn create_workspace_view(
     &self,
     uid: i64,
-    workspace_view_builder: Arc<RwLock<NestedViewBuilder>>,
+    workspace_view_builder: Arc<RwLock<WorkspaceViewBuilder>>,
   ) -> FutureResult<(), FlowyError> {
     let manager = self.0.clone();
     FutureResult::new(async move {

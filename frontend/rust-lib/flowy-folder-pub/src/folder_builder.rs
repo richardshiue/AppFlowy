@@ -4,19 +4,19 @@ use crate::cloud::gen_view_id;
 use collab_folder::{RepeatedViewIdentifier, View, ViewIcon, ViewIdentifier, ViewLayout};
 use lib_infra::util::timestamp;
 
-/// A builder for creating views, each able to have children views of
-/// their own.
-pub struct NestedViewBuilder {
+/// A builder for creating a view for a workspace.
+/// The views created by this builder will be the first level views of the workspace.
+pub struct WorkspaceViewBuilder {
   pub uid: i64,
-  pub parent_view_id: String,
+  pub workspace_id: String,
   pub views: Vec<ParentChildViews>,
 }
 
-impl NestedViewBuilder {
-  pub fn new(parent_view_id: String, uid: i64) -> Self {
+impl WorkspaceViewBuilder {
+  pub fn new(workspace_id: String, uid: i64) -> Self {
     Self {
       uid,
-      parent_view_id,
+      workspace_id,
       views: vec![],
     }
   }
@@ -26,7 +26,7 @@ impl NestedViewBuilder {
     F: Fn(ViewBuilder) -> O,
     O: Future<Output = ParentChildViews>,
   {
-    let builder = ViewBuilder::new(self.uid, self.parent_view_id.clone());
+    let builder = ViewBuilder::new(self.uid, self.workspace_id.clone());
     self.views.push(view_builder(builder).await);
   }
 
@@ -183,12 +183,12 @@ impl FlattedViews {
 
 #[cfg(test)]
 mod tests {
-  use crate::folder_builder::{FlattedViews, NestedViewBuilder};
+  use crate::folder_builder::{FlattedViews, WorkspaceViewBuilder};
 
   #[tokio::test]
   async fn create_first_level_views_test() {
     let workspace_id = "w1".to_string();
-    let mut builder = NestedViewBuilder::new(workspace_id, 1);
+    let mut builder = WorkspaceViewBuilder::new(workspace_id, 1);
     builder
       .with_view_builder(|view_builder| async { view_builder.with_name("1").build() })
       .await;
@@ -208,7 +208,7 @@ mod tests {
   #[tokio::test]
   async fn create_view_with_child_views_test() {
     let workspace_id = "w1".to_string();
-    let mut builder = NestedViewBuilder::new(workspace_id, 1);
+    let mut builder = WorkspaceViewBuilder::new(workspace_id, 1);
     builder
       .with_view_builder(|view_builder| async {
         view_builder
@@ -248,11 +248,10 @@ mod tests {
     let views = FlattedViews::flatten_views(workspace_views);
     assert_eq!(views.len(), 5);
   }
-
   #[tokio::test]
   async fn create_three_level_view_test() {
     let workspace_id = "w1".to_string();
-    let mut builder = NestedViewBuilder::new(workspace_id, 1);
+    let mut builder = WorkspaceViewBuilder::new(workspace_id, 1);
     builder
       .with_view_builder(|view_builder| async {
         view_builder
