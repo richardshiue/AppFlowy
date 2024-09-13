@@ -204,8 +204,10 @@ class RowCache {
 
   void _showRows(List<InsertedRowPB> visibleRows) {
     for (final insertedRow in visibleRows) {
-      final insertedIndex =
-          _rowList.insert(insertedRow.index, buildGridRow(insertedRow.rowMeta));
+      final insertedIndex = _rowList.insertIfAbsent(
+        insertedRow.index,
+        buildGridRow(insertedRow.rowMeta),
+      );
       if (insertedIndex != null) {
         _changedNotifier?.receive(ChangedReason.insert(insertedIndex));
       }

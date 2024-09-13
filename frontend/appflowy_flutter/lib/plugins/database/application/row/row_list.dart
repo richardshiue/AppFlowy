@@ -27,6 +27,10 @@ class RowList {
     return null;
   }
 
+  bool contains(RowId rowId) {
+    return rowInfoByRowId[rowId] != null;
+  }
+
   void add(RowInfo rowInfo) {
     final rowId = rowInfo.rowId;
     if (contains(rowId)) {
@@ -41,8 +45,8 @@ class RowList {
 
   InsertedIndex? insert(int index, RowInfo rowInfo) {
     final rowId = rowInfo.rowId;
-    var insertedIndex = index;
-    if (_rowInfos.length <= insertedIndex) {
+    int insertedIndex = index;
+    if (_rowInfos.length < insertedIndex) {
       insertedIndex = _rowInfos.length;
     }
 
@@ -57,6 +61,22 @@ class RowList {
       rowInfoByRowId[rowId] = rowInfo;
       return InsertedIndex(index: insertedIndex, rowId: rowId);
     }
+  }
+
+  InsertedIndex? insertIfAbsent(int index, RowInfo rowInfo) {
+    final rowId = rowInfo.rowId;
+    int insertedIndex = index;
+    if (insertedIndex > _rowInfos.length) {
+      insertedIndex = _rowInfos.length;
+    }
+
+    final oldRowInfo = get(rowId);
+    if (oldRowInfo == null) {
+      _rowInfos.insert(insertedIndex, rowInfo);
+      rowInfoByRowId[rowId] = rowInfo;
+      return InsertedIndex(index: insertedIndex, rowId: rowId);
+    }
+    return null;
   }
 
   DeletedIndex? remove(RowId rowId) {
@@ -161,10 +181,6 @@ class RowList {
       final rowInfo = remove(rowId)!.rowInfo;
       insert(newIndex, rowInfo);
     }
-  }
-
-  bool contains(RowId rowId) {
-    return rowInfoByRowId[rowId] != null;
   }
 
   void dispose() {
