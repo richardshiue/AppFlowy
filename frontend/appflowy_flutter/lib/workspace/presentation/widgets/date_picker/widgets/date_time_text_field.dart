@@ -270,6 +270,7 @@ class _DateTimeTextFieldState extends State<DateTimeTextField> {
                   children: [
                     Expanded(
                       child: TextField(
+                        key: const ValueKey('date_time_text_field_date'),
                         focusNode: dateFocusNode,
                         controller: dateTextController,
                         style: Theme.of(context).textTheme.bodyMedium,
@@ -289,6 +290,7 @@ class _DateTimeTextFieldState extends State<DateTimeTextField> {
                     ),
                     Expanded(
                       child: TextField(
+                        key: const ValueKey('date_time_text_field_time'),
                         focusNode: timeFocusNode,
                         controller: timeTextController,
                         style: Theme.of(context).textTheme.bodyMedium,
