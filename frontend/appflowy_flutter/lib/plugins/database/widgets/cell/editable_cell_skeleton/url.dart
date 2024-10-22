@@ -233,3 +233,61 @@ void openUrlCellLink(String content) async {
     await launchUrl(uri);
   }
 }
+
+void main() {
+  final urlList = [
+    "https://www.google.com/search?client=firefox-b-d&q=asdf+asdf+asdf+asdf",
+    "www.google.com/search?client=firefox-b-d&q=asdf+asdf+asdf+asdf",
+    "yahoo.com",
+    "appflowy-flutter://",
+    "localhost:8000/dummy.html",
+    "file://localhost:8000/absolute/path/to/file",
+    "http://localhost:8000/dummy.html",
+    "file:///Users/richardshiue/error.txt",
+    "192.168.35.1",
+    "chocolate",
+    "file://localhost/etc/fstab",
+    "file:///etc/fstab",
+    "file:/etc/fstab",
+  ];
+
+  for (final url in urlList) {
+    final (bold, regular) = breakDownUrl(url);
+    print('answer: $bold, $regular');
+    print('');
+  }
+}
+
+(String, String) breakDownUrl(String content) {
+  late Uri uri;
+
+  try {
+    uri = Uri.parse(content);
+    // `Uri` identifies `localhost` as a scheme
+    if (!uri.hasScheme || uri.scheme == 'localhost') {
+      uri = Uri.parse("http://$content");
+    }
+  } catch (_) {
+    return (content, "");
+  }
+
+  final uriString = uri.toString();
+  print(uriString);
+
+  if (uri.hasAuthority) {
+    return (uri.authority, uriString.split(uri.authority).last);
+  }
+
+  if (uri.isScheme('file')) {
+    print(uri.host);
+  }
+
+//   String splitPattern = uri.host;
+//   if (uri.hasPort) {
+//     splitPattern += ":${uri.port.toString()}";
+//   }
+
+//   return (splitPattern, uriString.split(splitPattern).last);
+
+  return (content, "");
+}
