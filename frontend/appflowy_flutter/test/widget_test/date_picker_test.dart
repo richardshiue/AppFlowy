@@ -1,7 +1,7 @@
 import 'package:appflowy/generated/flowy_svgs.g.dart';
 import 'package:appflowy/plugins/database/widgets/cell/editable_cell_skeleton/date.dart';
 import 'package:appflowy/plugins/database/widgets/field/type_option_editor/date/date_time_format.dart';
-import 'package:appflowy/workspace/presentation/widgets/date_picker/appflowy_date_picker.dart';
+import 'package:appflowy/workspace/presentation/widgets/date_picker/desktop_date_picker.dart';
 import 'package:appflowy/workspace/presentation/widgets/date_picker/widgets/date_picker.dart';
 import 'package:appflowy/workspace/presentation/widgets/date_picker/widgets/date_time_text_field.dart';
 import 'package:appflowy/workspace/presentation/widgets/date_picker/widgets/end_time_button.dart';
