@@ -496,6 +496,10 @@ class _PromptBottomActions extends StatelessWidget {
             children: [
               // predefinedFormatButton(),
               const Spacer(),
+              _selectSourcesButton(context),
+              const HSpace(
+                DesktopAIPromptSizes.actionBarButtonSpacing,
+              ),
               _mentionButton(context),
               const HSpace(
                 DesktopAIPromptSizes.actionBarButtonSpacing,
@@ -512,6 +516,10 @@ class _PromptBottomActions extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _selectSourcesButton(BuildContext context) {
+    return const SizedBox.shrink();
   }
 
   Widget _mentionButton(BuildContext context) {
