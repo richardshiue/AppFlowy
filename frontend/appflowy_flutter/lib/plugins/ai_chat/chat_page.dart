@@ -5,6 +5,7 @@ import 'package:appflowy/plugins/ai_chat/application/chat_bloc.dart';
 import 'package:appflowy/plugins/ai_chat/application/chat_entity.dart';
 import 'package:appflowy/plugins/ai_chat/application/ai_prompt_input_bloc.dart';
 import 'package:appflowy/plugins/ai_chat/application/chat_message_stream.dart';
+import 'package:appflowy/plugins/ai_chat/application/chat_select_sources_cubit.dart';
 import 'package:appflowy/plugins/ai_chat/presentation/chat_related_question.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/workspace/application/tabs/tabs_bloc.dart';
@@ -67,6 +68,12 @@ class AIChatPage extends StatelessWidget {
           create: (_) => ChatBloc(
             chatId: view.id,
             userId: userProfile.id.toString(),
+          ),
+        ),
+
+        BlocProvider(
+          create: (_) => ChatSettingsCubit(
+            chatId: view.id,
           ),
         ),
 
@@ -296,6 +303,9 @@ class _ChatContentPage extends StatelessWidget {
                         );
                   },
                   isStreaming: !canSendMessage,
+                  // onUpdateSelectedSources: (viewIds) => context
+                  //     .read<ChatBloc>()
+                  //     .add(ChatEvent.updateSelectedSources(viewIds)),
                   onStopStreaming: () => context
                       .read<ChatBloc>()
                       .add(const ChatEvent.stopStream()),
