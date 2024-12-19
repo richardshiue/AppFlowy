@@ -13,41 +13,18 @@ import 'package:nanoid/nanoid.dart';
 /// Indicate file source from appflowy document
 const appflowySource = "appflowy";
 
-List<ChatFile> fileListFromMessageMetadata(
-  Map<String, dynamic>? map,
-) {
-  final List<ChatFile> metadata = [];
-  if (map != null) {
-    for (final entry in map.entries) {
-      if (entry.value is ChatFile) {
-        metadata.add(entry.value);
-      }
-    }
-  }
-
-  return metadata;
-}
-
 List<ChatFile> chatFilesFromMetadataString(String? s) {
   if (s == null || s.isEmpty || s == "null") {
     return [];
   }
 
   final metadataJson = jsonDecode(s);
+
   if (metadataJson is Map<String, dynamic>) {
     final file = chatFileFromMap(metadataJson);
-    if (file != null) {
-      return [file];
-    } else {
-      return [];
-    }
-  } else if (metadataJson is List) {
-    return metadataJson
-        .map((e) => e as Map<String, dynamic>)
-        .map(chatFileFromMap)
-        .where((file) => file != null)
-        .cast<ChatFile>()
-        .toList();
+    return file != null ? [file] : [];
+  } else if (metadataJson is List<Map<String, dynamic>>) {
+    return metadataJson.map(chatFileFromMap).nonNulls.toList();
   } else {
     Log.error("Invalid metadata: $metadataJson");
     return [];
@@ -123,7 +100,9 @@ MetadataCollection parseMetadata(String? s) {
 Future<List<ChatMessageMetaPB>> metadataPBFromMetadata(
   Map<String, dynamic>? map,
 ) async {
-  if (map == null) return [];
+  if (map == null) {
+    return [];
+  }
 
   final List<ChatMessageMetaPB> metadata = [];
 
@@ -170,14 +149,5 @@ Future<List<ChatMessageMetaPB>> metadataPBFromMetadata(
 List<ChatFile> chatFilesFromMessageMetadata(
   Map<String, dynamic>? map,
 ) {
-  final List<ChatFile> metadata = [];
-  if (map != null) {
-    for (final entry in map.entries) {
-      if (entry.value is ChatFile) {
-        metadata.add(entry.value);
-      }
-    }
-  }
-
-  return metadata;
+  return map?.values.whereType<ChatFile>().toList() ?? [];
 }
