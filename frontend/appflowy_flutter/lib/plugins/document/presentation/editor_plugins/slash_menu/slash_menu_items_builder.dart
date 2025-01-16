@@ -40,8 +40,13 @@ List<SelectionMenuItem> _defaultSlashMenuItems({
   DocumentBloc? documentBloc,
 }) {
   return [
-    // disable ai writer in local mode
-    if (!isLocalMode) aiWriterSlashMenuItem,
+    // ai
+    if (!isLocalMode) ...[
+      askAISlashMenuItem,
+      continueWritingSlashMenuItem,
+      fixSpellingAndGrammarSlashMenuItem,
+      summarizeSlashMenuItem,
+    ],
 
     paragraphSlashMenuItem,
 

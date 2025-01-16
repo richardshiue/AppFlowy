@@ -1,8 +1,7 @@
 import 'package:appflowy/ai/ai.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
-import 'package:appflowy/plugins/ai_chat/application/ai_prompt_input_bloc.dart';
-import 'package:appflowy/plugins/ai_chat/application/chat_entity.dart';
 import 'package:appflowy/plugins/ai_chat/application/chat_input_control_cubit.dart';
+import 'package:appflowy/util/theme_extension.dart';
 import 'package:appflowy/workspace/application/view/view_ext.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:extended_text_field/extended_text_field.dart';
@@ -10,19 +9,15 @@ import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../layout_define.dart';
-
 class MobileChatInput extends StatefulWidget {
   const MobileChatInput({
     super.key,
-    required this.chatId,
     required this.isStreaming,
     required this.onStopStreaming,
     required this.onSubmitted,
     required this.onUpdateSelectedSources,
   });
 
-  final String chatId;
   final bool isStreaming;
   final void Function() onStopStreaming;
   final void Function(String, PredefinedFormat?, Map<String, dynamic>)
@@ -116,7 +111,6 @@ class _MobileChatInputState extends State<MobileChatInput> {
                             MobileAIPromptSizes.attachedFilesPreviewHeight,
                   ),
                   child: PromptInputFile(
-                    chatId: widget.chatId,
                     onDeleted: (file) => context
                         .read<AIPromptInputBloc>()
                         .add(AIPromptInputEvent.removeFile(file)),
@@ -266,7 +260,7 @@ class _MobileChatInputState extends State<MobileChatInput> {
               AIType.appflowyAI => LocaleKeys.chat_inputMessageHint.tr(),
               AIType.localAI => LocaleKeys.chat_inputLocalAIMessageHint.tr()
             },
-            hintStyle: AIChatUILayout.inputHintTextStyle(context),
+            hintStyle: inputHintTextStyle(context),
             isCollapsed: true,
             isDense: true,
           ),
@@ -287,6 +281,14 @@ class _MobileChatInputState extends State<MobileChatInput> {
         );
       },
     );
+  }
+
+  TextStyle? inputHintTextStyle(BuildContext context) {
+    return Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).isLightMode
+              ? const Color(0xFFBDC2C8)
+              : const Color(0xFF3C3E51),
+        );
   }
 
   Widget leadingButtons(BuildContext context) {

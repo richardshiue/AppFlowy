@@ -1,49 +1,39 @@
-import 'package:appflowy/ai/service/appflowy_ai_service.dart';
-import 'package:appflowy/ai/service/error.dart';
+import 'package:appflowy/ai/ai.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/plugins/document/application/prelude.dart';
-import 'package:appflowy/plugins/document/presentation/editor_plugins/base/build_context_extension.dart';
-import 'package:appflowy/plugins/document/presentation/editor_plugins/base/markdown_text_robot.dart';
+import 'package:appflowy/workspace/presentation/home/menu/sidebar/space/shared_widget.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
-import 'package:appflowy_backend/log.dart';
-import 'package:appflowy_backend/protobuf/flowy-ai/entities.pb.dart';
 import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:universal_platform/universal_platform.dart';
 
-import 'widgets/ai_limit_dialog.dart';
-import 'widgets/ai_writer_block_operations.dart';
-import 'widgets/ai_writer_block_widgets.dart';
-import 'widgets/discard_dialog.dart';
-import 'widgets/barrier_dialog.dart';
+import 'operations/ai_writer_cubit.dart';
+import 'operations/ai_writer_entities.dart';
+import 'widgets/suggestion_action_bar.dart';
 
 class AIWriterBlockKeys {
   const AIWriterBlockKeys._();
 
   static const String type = 'ai_writer';
-  static const String prompt = 'prompt';
-  static const String startSelection = 'start_selection';
-  static const String generationCount = 'generation_count';
 
-  static String getRewritePrompt(String previousOutput, String prompt) {
-    return 'I am not satisfied with your previous response ($previousOutput) to the query ($prompt). Please provide an alternative response.';
-  }
+  static const String isInitialized = 'is_initialized';
+  static const String selection = 'selection';
+  static const String command = 'command';
 }
 
 Node aiWriterNode({
-  String prompt = '',
-  required Selection start,
+  required Selection? selection,
+  required AiWriterCommand command,
 }) {
   return Node(
     type: AIWriterBlockKeys.type,
     attributes: {
-      AIWriterBlockKeys.prompt: prompt,
-      AIWriterBlockKeys.startSelection: start.toJson(),
-      AIWriterBlockKeys.generationCount: 0,
+      AIWriterBlockKeys.isInitialized: false,
+      AIWriterBlockKeys.selection: selection?.toJson(),
+      AIWriterBlockKeys.command: command.index,
     },
   );
 }
@@ -68,8 +58,9 @@ class AIWriterBlockComponentBuilder extends BlockComponentBuilder {
   @override
   BlockComponentValidate get validate => (node) =>
       node.children.isEmpty &&
-      node.attributes[AIWriterBlockKeys.prompt] is String &&
-      node.attributes[AIWriterBlockKeys.startSelection] is Map;
+      node.attributes[AIWriterBlockKeys.isInitialized] is bool &&
+      node.attributes[AIWriterBlockKeys.selection] is Map? &&
+      node.attributes[AIWriterBlockKeys.command] is int;
 }
 
 class AIWriterBlockComponent extends BlockComponentStatefulWidget {
@@ -86,46 +77,57 @@ class AIWriterBlockComponent extends BlockComponentStatefulWidget {
 }
 
 class _AIWriterBlockComponentState extends State<AIWriterBlockComponent> {
+  final key = GlobalKey();
   final controller = TextEditingController();
   final textFieldFocusNode = FocusNode();
+  final overlayController = OverlayPortalController();
+  final layerLink = LayerLink();
+  final selectedSourcesNotifier = ValueNotifier<List<String>>(const []);
 
   late final editorState = context.read<EditorState>();
   late final SelectionGestureInterceptor interceptor;
-  late final aiWriterOperations = AIWriterBlockOperations(
+  late final aiWriterCubit = AiWriterCubit(
+    documentId: context.read<DocumentBloc>().documentId,
     editorState: editorState,
-    aiWriterNode: widget.node,
+    node: widget.node,
+    initialCommand: command,
   );
 
-  String get prompt => widget.node.attributes[AIWriterBlockKeys.prompt];
-  int get generationCount =>
-      widget.node.attributes[AIWriterBlockKeys.generationCount] ?? 0;
-  Selection? get startSelection {
-    final selection = widget.node.attributes[AIWriterBlockKeys.startSelection];
-    if (selection != null) {
-      return Selection.fromJson(selection);
-    }
-    return null;
+  bool get isInitialized {
+    return widget.node.attributes[AIWriterBlockKeys.isInitialized];
   }
 
-  bool isGenerating = false;
+  Selection? get startSelection {
+    final selection = widget.node.attributes[AIWriterBlockKeys.selection];
+    if (selection == null) {
+      return null;
+    }
+    return Selection.fromJson(selection);
+  }
+
+  AiWriterCommand get command {
+    final index = widget.node.attributes[AIWriterBlockKeys.command];
+    return AiWriterCommand.values[index];
+  }
 
   @override
   void initState() {
     super.initState();
 
-    _subscribeSelectionGesture();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      editorState.selection = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      overlayController.show();
       textFieldFocusNode.requestFocus();
+      if (!isInitialized) {
+        aiWriterCubit.init();
+      }
     });
   }
 
   @override
   void dispose() {
-    _onExit();
-    _unsubscribeSelectionGesture();
     controller.dispose();
     textFieldFocusNode.dispose();
+    selectedSourcesNotifier.dispose();
 
     super.dispose();
   }
@@ -136,263 +138,95 @@ class _AIWriterBlockComponentState extends State<AIWriterBlockComponent> {
       return const SizedBox.shrink();
     }
 
-    final child = Focus(
-      onKeyEvent: (node, event) {
-        if (event is! KeyDownEvent) {
-          return KeyEventResult.ignored;
-        }
-        if (event.logicalKey == LogicalKeyboardKey.enter) {
-          if (!isGenerating) {
-            _onGenerate();
-          }
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Card(
-        elevation: 5,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(
+          value: aiWriterCubit,
         ),
-        color: Theme.of(context).colorScheme.surface,
-        child: Container(
-          margin: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AIWriterBlockHeader(),
-              const Space(0, 10),
-              if (prompt.isEmpty && generationCount < 1) ...[
-                _buildInputWidget(context),
-                const Space(0, 10),
-                AIWriterBlockInputField(
-                  onGenerate: _onGenerate,
-                  onExit: _onExit,
-                ),
-              ] else ...[
-                AIWriterBlockFooter(
-                  onKeep: _onExit,
-                  onRewrite: _onRewrite,
-                  onDiscard: _onDiscard,
-                ),
-              ],
-            ],
-          ),
+        BlocProvider(
+          create: (context) => AIPromptInputBloc(),
         ),
+      ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return OverlayPortal(
+            controller: overlayController,
+            overlayChildBuilder: (context) {
+              return Stack(
+                children: [
+                  MouseRegion(
+                    cursor: SystemMouseCursors.basic,
+                    hitTestBehavior: HitTestBehavior.opaque,
+                    child: Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: (_) {
+                        if (aiWriterCubit.hasUnusedResponse()) {
+                          showConfirmDialog(
+                            context: context,
+                            title: "Discard",
+                            description: LocaleKeys
+                                .document_plugins_discardResponse
+                                .tr(),
+                            confirmLabel: LocaleKeys.button_discard.tr(),
+                            style: ConfirmPopupStyle.cancelAndOk,
+                            onConfirm: () => aiWriterCubit.discard(),
+                            onCancel: () {},
+                          );
+                        } else {
+                          aiWriterCubit.discard();
+                        }
+                      },
+                    ),
+                  ),
+                  CompositedTransformFollower(
+                    link: layerLink,
+                    child: Container(
+                      padding: const EdgeInsets.only(
+                        left: 40.0,
+                        bottom: 16.0,
+                      ),
+                      width: constraints.maxWidth,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SuggestionActionBar(
+                            showDecoration: true,
+                            children: [],
+                          ),
+                          const VSpace(4),
+                          DesktopPromptInput(
+                            isStreaming: false,
+                            usePopoverDecorationStyle: true,
+                            onStopStreaming: () {},
+                            selectedSourcesNotifier: selectedSourcesNotifier,
+                            onUpdateSelectedSources: (sources) {},
+                            onSubmitted: (message, format, metadata) {},
+                          ),
+                          const VSpace(4),
+                          // TODO: suggested actions
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+            child: CompositedTransformTarget(
+              link: layerLink,
+              child: BlocBuilder<AiWriterCubit, AiWriterState>(
+                builder: (context, state) {
+                  return SizedBox(
+                    key: key,
+                    width: double.infinity,
+                  );
+                },
+              ),
+            ),
+          );
+        },
       ),
     );
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 40),
-      child: child,
-    );
-  }
-
-  Widget _buildInputWidget(BuildContext context) {
-    return FlowyTextField(
-      hintText: LocaleKeys.document_plugins_autoGeneratorHintText.tr(),
-      controller: controller,
-      maxLines: 5,
-      focusNode: textFieldFocusNode,
-      autoFocus: false,
-      hintTextConstraints: const BoxConstraints(),
-    );
-  }
-
-  Future<void> _onExit() async {
-    await aiWriterOperations.removeAIWriterNode(widget.node);
-  }
-
-  Future<void> _onGenerate() async {
-    if (isGenerating) {
-      return;
-    }
-
-    isGenerating = true;
-
-    await aiWriterOperations.updatePromptText(controller.text);
-
-    if (!_isAIWriterEnabled) {
-      Log.error('AI Writer is not enabled');
-      return;
-    }
-
-    final markdownTextRobot = MarkdownTextRobot(
-      editorState: editorState,
-    );
-
-    BarrierDialog? barrierDialog;
-
-    final aiRepository = AppFlowyAIService();
-    final objectId =
-        editorState.document.root.context?.read<DocumentBloc>().documentId ??
-            "";
-
-    await aiRepository.streamCompletion(
-      objectId: objectId,
-      text: controller.text,
-      completionType: CompletionTypePB.ContinueWriting,
-      onStart: () async {
-        if (mounted) {
-          barrierDialog = BarrierDialog(context);
-          barrierDialog?.show();
-          await aiWriterOperations.ensurePreviousNodeIsEmptyParagraphNode();
-          markdownTextRobot.start();
-        }
-      },
-      onProcess: (text) async {
-        await markdownTextRobot.appendMarkdownText(text);
-      },
-      onEnd: () async {
-        barrierDialog?.dismiss();
-        await markdownTextRobot.stop();
-        editorState.service.keyboardService?.enable();
-      },
-      onError: (error) async {
-        barrierDialog?.dismiss();
-        _showAIWriterError(error);
-      },
-    );
-
-    await aiWriterOperations.updateGenerationCount(generationCount + 1);
-
-    isGenerating = false;
-  }
-
-  Future<void> _onDiscard() async {
-    await aiWriterOperations.discardCurrentResponse(
-      aiWriterNode: widget.node,
-      selection: startSelection,
-    );
-    return _onExit();
-  }
-
-  Future<void> _onRewrite() async {
-    if (isGenerating) {
-      return;
-    }
-
-    isGenerating = true;
-
-    final previousOutput = _getPreviousOutput();
-    if (previousOutput == null) {
-      return;
-    }
-
-    // discard the current response
-    await aiWriterOperations.discardCurrentResponse(
-      aiWriterNode: widget.node,
-      selection: startSelection,
-    );
-
-    if (!_isAIWriterEnabled) {
-      return;
-    }
-
-    final markdownTextRobot = MarkdownTextRobot(
-      editorState: editorState,
-    );
-    final aiService = AppFlowyAIService();
-    final objectId =
-        editorState.document.root.context?.read<DocumentBloc>().documentId ??
-            "";
-    await aiService.streamCompletion(
-      objectId: objectId,
-      text: AIWriterBlockKeys.getRewritePrompt(previousOutput, prompt),
-      completionType: CompletionTypePB.ContinueWriting,
-      onStart: () async {
-        await aiWriterOperations.ensurePreviousNodeIsEmptyParagraphNode();
-
-        markdownTextRobot.start();
-      },
-      onProcess: (text) async {
-        await markdownTextRobot.appendMarkdownText(text);
-      },
-      onEnd: () async {
-        await markdownTextRobot.stop();
-      },
-      onError: (error) {
-        _showAIWriterError(error);
-      },
-    );
-
-    await aiWriterOperations.updateGenerationCount(generationCount + 1);
-
-    isGenerating = false;
-  }
-
-  String? _getPreviousOutput() {
-    final startSelection = this.startSelection;
-    if (startSelection != null) {
-      final end = widget.node.previous?.path;
-
-      if (end != null) {
-        final result = editorState
-            .getNodesInSelection(
-          startSelection.copyWith(end: Position(path: end)),
-        )
-            .fold(
-          '',
-          (previousValue, element) {
-            final delta = element.delta;
-            if (delta != null) {
-              return "$previousValue\n${delta.toPlainText()}";
-            } else {
-              return previousValue;
-            }
-          },
-        );
-        return result.trim();
-      }
-    }
-    return null;
-  }
-
-  void _subscribeSelectionGesture() {
-    interceptor = SelectionGestureInterceptor(
-      key: AIWriterBlockKeys.type,
-      canTap: (details) {
-        if (!context.isOffsetInside(details.globalPosition)) {
-          if (prompt.isNotEmpty || controller.text.isNotEmpty) {
-            // show dialog
-            showDialog(
-              context: context,
-              builder: (_) => DiscardDialog(
-                onConfirm: _onDiscard,
-                onCancel: () {},
-              ),
-            );
-          } else if (controller.text.isEmpty) {
-            _onExit();
-          }
-        }
-        editorState.service.keyboardService?.disable();
-        return false;
-      },
-    );
-    editorState.service.selectionService.registerGestureInterceptor(
-      interceptor,
-    );
-  }
-
-  void _unsubscribeSelectionGesture() {
-    editorState.service.selectionService.unregisterGestureInterceptor(
-      AIWriterBlockKeys.type,
-    );
-  }
-
-  void _showAIWriterError(AIError error) {
-    if (mounted) {
-      if (error.isLimitExceeded) {
-        showAILimitDialog(context, error.message);
-      } else {
-        showToastNotification(
-          context,
-          message: error.message,
-          type: ToastificationType.error,
-        );
-      }
-    }
   }
 
   bool get _isAIWriterEnabled {
@@ -410,3 +244,64 @@ class _AIWriterBlockComponentState extends State<AIWriterBlockComponent> {
     return isAIWriterEnabled;
   }
 }
+
+List<SuggestionAction> _getSuggestedActions({
+  required AiWriterCommand currentCommand,
+  required bool hasSelection,
+}) {
+  if (hasSelection) {
+    return switch (currentCommand) {
+      AiWriterCommand.userQuestion || AiWriterCommand.continueWriting => [
+          SuggestionAction.keep,
+          SuggestionAction.discard,
+          SuggestionAction.rewrite,
+        ],
+      AiWriterCommand.explain || AiWriterCommand.summarize => [
+          SuggestionAction.insertBelow,
+          SuggestionAction.tryAgain,
+          SuggestionAction.close,
+        ],
+      AiWriterCommand.fixSpellingAndGrammar ||
+      AiWriterCommand.improveWriting =>
+        [
+          SuggestionAction.accept,
+          SuggestionAction.discard,
+          SuggestionAction.insertBelow,
+          SuggestionAction.rewrite,
+        ],
+      AiWriterCommand.makeShorter || AiWriterCommand.makeLonger => [
+          SuggestionAction.keep,
+          SuggestionAction.discard,
+          SuggestionAction.rewrite,
+        ]
+    };
+  } else {
+    return switch (currentCommand) {
+      AiWriterCommand.userQuestion || AiWriterCommand.continueWriting => [
+          SuggestionAction.keep,
+          SuggestionAction.discard,
+          SuggestionAction.rewrite,
+        ],
+      AiWriterCommand.explain || AiWriterCommand.summarize => [
+          SuggestionAction.insertBelow,
+          SuggestionAction.tryAgain,
+          SuggestionAction.close,
+        ],
+      // TODO: fix spelling and grammar, improve writing
+      _ => throw UnimplementedError(),
+    };
+  }
+}
+
+
+// LocaleKeys.document_plugins_autoGeneratorRewrite.tr()
+// LocaleKeys.button_insertBelow.tr()
+// LocaleKeys.button_replace.tr()
+// LocaleKeys.button_cancel.tr()
+// LocaleKeys.document_plugins_warning.tr()
+// LocaleKeys.button_generate.tr()
+// LocaleKeys.button_cancel.tr()
+// LocaleKeys.document_plugins_warning.tr()
+// LocaleKeys.document_plugins_autoGeneratorRewrite.tr()
+// LocaleKeys.button_keep.tr()
+// LocaleKeys.button_discard.tr()

@@ -1,3 +1,7 @@
+export 'service/ai_client.dart';
+export 'service/ai_entities.dart';
+export 'service/ai_prompt_input_bloc.dart';
+export 'service/appflowy_ai_service.dart';
 export 'widgets/loading_indicator.dart';
 export 'widgets/prompt_input/action_buttons.dart';
 export 'widgets/prompt_input/desktop_input_text_field.dart';

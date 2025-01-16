@@ -1,3 +1,4 @@
+import 'package:appflowy/ai/ai.dart';
 import 'package:appflowy/ai/widgets/loading_indicator.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/plugins/ai_chat/application/chat_ai_message_bloc.dart';

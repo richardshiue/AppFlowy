@@ -23,7 +23,7 @@ void main() {
       final markdownTextRobot = MarkdownTextRobot(
         editorState: editorState,
       );
-      markdownTextRobot.start();
+      await markdownTextRobot.start();
       for (final text in texts) {
         await markdownTextRobot.appendMarkdownText(text);
         // mock the delay of the text robot
@@ -41,7 +41,7 @@ void main() {
         editorState: editorState,
       );
 
-      markdownTextRobot.start();
+      await markdownTextRobot.start();
       await markdownTextRobot.appendMarkdownText(_sample1);
       await markdownTextRobot.stop();
 

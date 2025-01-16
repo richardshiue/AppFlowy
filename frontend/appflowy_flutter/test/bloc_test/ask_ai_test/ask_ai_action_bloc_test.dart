@@ -1,7 +1,7 @@
-import 'package:appflowy/ai/service/ai_client.dart';
-import 'package:appflowy/ai/service/appflowy_ai_service.dart';
+import 'package:appflowy/ai/ai.dart';
 import 'package:appflowy/ai/service/error.dart';
-import 'package:appflowy/plugins/document/presentation/editor_plugins/ai/widgets/ask_ai_action_bloc.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/ai/operations/ai_writer_cubit.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/ai/operations/ai_writer_entities.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/plugins.dart';
 import 'package:appflowy_backend/protobuf/flowy-ai/entities.pb.dart';
 import 'package:appflowy_editor/appflowy_editor.dart';
@@ -18,6 +18,7 @@ class _MockAIRepository extends Mock implements AIRepository {
   Future<void> streamCompletion({
     String? objectId,
     required String text,
+    PredefinedFormat? format,
     required CompletionTypePB completionType,
     required Future<void> Function() onStart,
     required Future<void> Function(String text) onProcess,
@@ -38,6 +39,7 @@ class _MockAIRepositoryLess extends Mock implements AIRepository {
   Future<void> streamCompletion({
     String? objectId,
     required String text,
+    PredefinedFormat? format,
     required CompletionTypePB completionType,
     required Future<void> Function() onStart,
     required Future<void> Function(String text) onProcess,
@@ -56,6 +58,7 @@ class _MockAIRepositoryMore extends Mock implements AIRepository {
   Future<void> streamCompletion({
     String? objectId,
     required String text,
+    PredefinedFormat? format,
     required CompletionTypePB completionType,
     required Future<void> Function() onStart,
     required Future<void> Function(String text) onProcess,
@@ -76,6 +79,7 @@ class _MockErrorRepository extends Mock implements AIRepository {
   Future<void> streamCompletion({
     String? objectId,
     required String text,
+    PredefinedFormat? format,
     required CompletionTypePB completionType,
     required Future<void> Function() onStart,
     required Future<void> Function(String text) onProcess,
@@ -93,13 +97,13 @@ class _MockErrorRepository extends Mock implements AIRepository {
 }
 
 void main() {
-  group('AskAIActionBloc: ', () {
+  group('AIWriterCubit: ', () {
     const text1 = '1. Select text to style using the toolbar menu.';
     const text2 = '2. Discover more styling options in Aa.';
     const text3 =
         '3. AppFlowy empowers you to beautifully and effortlessly style your content.';
 
-    blocTest<AskAIActionBloc, AskAIState>(
+    blocTest<AiWriterCubit, AiWriterState>(
       'send request before the bloc is initialized',
       build: () {
         final document = Document(
@@ -117,16 +121,15 @@ void main() {
           end: Position(path: [2], offset: text3.length),
         );
 
-        final node = askAINode(
-          action: AskAIAction.makeItLonger,
+        final node = aiWriterNode(
+          command: AiWriterCommand.makeLonger,
           content: [text1, text2, text3].join('\n'),
         );
-        return AskAIActionBloc(
-          objectId: "",
+        return AiWriterCubit(
+          documentId: "",
           node: node,
           editorState: editorState,
-          action: AskAIAction.makeItLonger,
-          enableLogging: false,
+          initialCommand: AiWriterCommand.makeLonger,
         );
       },
       act: (bloc) {
@@ -134,18 +137,18 @@ void main() {
         bloc.add(const AskAIEvent.rewrite());
       },
       expect: () => [
-        isA<AskAIState>()
+        isA<AiWriterState>()
             .having((s) => s.loading, 'loading', true)
             .having((s) => s.result, 'result', isEmpty),
-        isA<AskAIState>()
+        isA<AiWriterState>()
             .having((s) => s.loading, 'loading', false)
             .having((s) => s.result, 'result', isNotEmpty)
             .having((s) => s.result, 'result', contains('UPDATED:')),
-        isA<AskAIState>().having((s) => s.loading, 'loading', false),
+        isA<AiWriterState>().having((s) => s.loading, 'loading', false),
       ],
     );
 
-    blocTest<AskAIActionBloc, AskAIState>(
+    blocTest<AiWriterCubit, AiWriterState>(
       'exceed the ai response limit',
       build: () {
         const text1 = '1. Select text to style using the toolbar menu.';
@@ -167,16 +170,15 @@ void main() {
           end: Position(path: [2], offset: text3.length),
         );
 
-        final node = askAINode(
-          action: AskAIAction.makeItLonger,
+        final node = aiWriterNode(
+          command: AiWriterCommand.makeLonger,
           content: [text1, text2, text3].join('\n'),
         );
-        return AskAIActionBloc(
-          objectId: "",
+        return AiWriterCubit(
+          documentId: "",
           node: node,
           editorState: editorState,
-          action: AskAIAction.makeItLonger,
-          enableLogging: false,
+          initialCommand: AiWriterCommand.makeLonger,
         );
       },
       act: (bloc) {
@@ -184,10 +186,10 @@ void main() {
         bloc.add(const AskAIEvent.rewrite());
       },
       expect: () => [
-        isA<AskAIState>()
+        isA<AiWriterState>()
             .having((s) => s.loading, 'loading', true)
             .having((s) => s.result, 'result', isEmpty),
-        isA<AskAIState>()
+        isA<AiWriterState>()
             .having((s) => s.requestError, 'requestError', isNotNull)
             .having(
               (s) => s.requestError?.code,
@@ -214,16 +216,15 @@ void main() {
         end: Position(path: [2], offset: text3.length),
       );
 
-      final node = askAINode(
-        action: AskAIAction.makeItLonger,
+      final node = aiWriterNode(
+        command: AiWriterCommand.makeLonger,
         content: [text1, text2, text3].join('\n\n'),
       );
-      final bloc = AskAIActionBloc(
-        objectId: "",
+      final bloc = AiWriterCubit(
+        documentId: "",
         node: node,
         editorState: editorState,
-        action: AskAIAction.summarize,
-        enableLogging: false,
+        initialCommand: AiWriterCommand.summarize,
       );
       bloc.add(AskAIEvent.initial(Future.value(_MockAIRepository())));
       await blocResponseFuture();
@@ -262,16 +263,15 @@ void main() {
         end: Position(path: [2], offset: text3.length),
       );
 
-      final node = askAINode(
-        action: AskAIAction.makeItLonger,
+      final node = aiWriterNode(
+        command: AiWriterCommand.makeLonger,
         content: [text1, text2, text3].join('\n'),
       );
-      final bloc = AskAIActionBloc(
-        objectId: "",
+      final bloc = AiWriterCubit(
+        documentId: "",
         node: node,
         editorState: editorState,
-        action: AskAIAction.summarize,
-        enableLogging: false,
+        initialCommand: AiWriterCommand.summarize,
       );
       bloc.add(AskAIEvent.initial(Future.value(_MockAIRepositoryLess())));
       await blocResponseFuture();
@@ -302,16 +302,15 @@ void main() {
         end: Position(path: [2], offset: text3.length),
       );
 
-      final node = askAINode(
-        action: AskAIAction.makeItLonger,
+      final node = aiWriterNode(
+        command: AiWriterCommand.makeLonger,
         content: [text1, text2, text3].join('\n'),
       );
-      final bloc = AskAIActionBloc(
-        objectId: "",
+      final bloc = AiWriterCubit(
+        documentId: "",
         node: node,
         editorState: editorState,
-        action: AskAIAction.summarize,
-        enableLogging: false,
+        initialCommand: AiWriterCommand.summarize,
       );
       bloc.add(AskAIEvent.initial(Future.value(_MockAIRepositoryMore())));
       await blocResponseFuture();

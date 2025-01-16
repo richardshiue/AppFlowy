@@ -317,10 +317,6 @@ Map<String, BlockComponentBuilder> _buildBlockComponentBuilderMap(
       context,
       configuration,
     ),
-    AskAIBlockKeys.type: _buildAskAIBlockComponentBuilder(
-      context,
-      configuration,
-    ),
     ToggleListBlockKeys.type: _buildToggleListBlockComponentBuilder(
       context,
       configuration,
@@ -791,13 +787,6 @@ AIWriterBlockComponentBuilder _buildAIWriterBlockComponentBuilder(
   BlockComponentConfiguration configuration,
 ) {
   return AIWriterBlockComponentBuilder();
-}
-
-AskAIBlockComponentBuilder _buildAskAIBlockComponentBuilder(
-  BuildContext context,
-  BlockComponentConfiguration configuration,
-) {
-  return AskAIBlockComponentBuilder();
 }
 
 ToggleListBlockComponentBuilder _buildToggleListBlockComponentBuilder(
