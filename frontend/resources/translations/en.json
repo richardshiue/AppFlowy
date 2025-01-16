@@ -1764,7 +1764,7 @@
       "smartEditCouldNotFetchKey": "Could not fetch AI key",
       "smartEditDisabled": "Connect AI in Settings",
       "appflowyAIEditDisabled": "Sign in to enable AI features",
-      "discardResponse": "Do you want to discard the AI responses?",
+      "discardResponse": "Are you sure you want to discard the AI response?",
       "createInlineMathEquation": "Create equation",
       "fonts": "Fonts",
       "insertDate": "Insert date",

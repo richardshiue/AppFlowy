@@ -88,13 +88,12 @@ impl CompletionTask {
 
       if let Some(cloud_service) = self.cloud_service.upgrade() {
         let complete_type = match self.context.completion_type {
-          CompletionTypePB::UnknownCompletionType | CompletionTypePB::ImproveWriting => {
-            CompletionType::ImproveWriting
-          },
+          CompletionTypePB::ImproveWriting => CompletionType::ImproveWriting,
           CompletionTypePB::SpellingAndGrammar => CompletionType::SpellingAndGrammar,
           CompletionTypePB::MakeShorter => CompletionType::MakeShorter,
           CompletionTypePB::MakeLonger => CompletionType::MakeLonger,
           CompletionTypePB::ContinueWriting => CompletionType::ContinueWriting,
+          _ => CompletionType::SpellingAndGrammar,
         };
 
         let _ = sink.send("start:".to_string()).await;

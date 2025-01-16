@@ -383,13 +383,15 @@ pub struct CompleteTextTaskPB {
 
 #[derive(Clone, Debug, ProtoBuf_Enum, Default)]
 pub enum CompletionTypePB {
-  UnknownCompletionType = 0,
   #[default]
-  ImproveWriting = 1,
-  SpellingAndGrammar = 2,
-  MakeShorter = 3,
-  MakeLonger = 4,
-  ContinueWriting = 5,
+  UserQuestion = 0,
+  ExplainSelected = 1,
+  SummarizeSelected = 2,
+  ContinueWriting = 3,
+  SpellingAndGrammar = 4,
+  ImproveWriting = 5,
+  MakeShorter = 6,
+  MakeLonger = 7,
 }
 
 #[derive(Default, ProtoBuf, Clone, Debug)]

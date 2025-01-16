@@ -1,5 +1,6 @@
 import 'package:appflowy/generated/flowy_svgs.g.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/ai/operations/ai_writer_entities.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/base/selectable_svg_widget.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/plugins.dart';
 import 'package:appflowy_editor/appflowy_editor.dart';
@@ -15,11 +16,11 @@ final _keywords = [
   'autogenerator',
 ];
 
-// auto generate menu item
 SelectionMenuItem aiWriterSlashMenuItem = SelectionMenuItem(
   getName: LocaleKeys.document_slashMenu_name_aiWriter.tr,
   keywords: _keywords,
-  handler: (editorState, _, __) async => editorState.insertAiWriter(),
+  handler: (editorState, _, __) async =>
+      _insertAiWriter(editorState, AiWriterCommand.userQuestion),
   icon: (_, isSelected, style) => SelectableSvgWidget(
     data: FlowySvgs.slash_menu_icon_ai_writer_s,
     isSelected: isSelected,
@@ -28,28 +29,61 @@ SelectionMenuItem aiWriterSlashMenuItem = SelectionMenuItem(
   nameBuilder: slashMenuItemNameBuilder,
 );
 
-extension on EditorState {
-  Future<void> insertAiWriter() async {
-    final selection = this.selection;
-    if (selection == null || !selection.isCollapsed) {
-      return;
-    }
-    final node = getNodeAtPath(selection.end.path);
-    final delta = node?.delta;
-    if (node == null || delta == null) {
-      return;
-    }
-    final newNode = aiWriterNode(start: selection);
+SelectionMenuItem continueWritingSlashMenuItem = SelectionMenuItem(
+  getName: () => "Continue writing",
+  keywords: _keywords,
+  handler: (editorState, _, __) async =>
+      _insertAiWriter(editorState, AiWriterCommand.continueWriting),
+  icon: (_, isSelected, style) => SelectableSvgWidget(
+    data: FlowySvgs.slash_menu_icon_ai_writer_s,
+    isSelected: isSelected,
+    style: style,
+  ),
+  nameBuilder: slashMenuItemNameBuilder,
+);
 
-    final transaction = this.transaction;
-    //default insert after
-    final path = node.path.next;
-    transaction
-      ..insertNode(path, newNode)
-      ..afterSelection = null;
-    await apply(
-      transaction,
-      options: const ApplyOptions(inMemoryUpdate: true),
-    );
+SelectionMenuItem fixSpellingAndGrammarSlashMenuItem = SelectionMenuItem(
+  getName: () => "Fix spelling and grammar",
+  keywords: _keywords,
+  handler: (editorState, _, __) async =>
+      _insertAiWriter(editorState, AiWriterCommand.fixSpellingAndGrammar),
+  icon: (_, isSelected, style) => SelectableSvgWidget(
+    data: FlowySvgs.slash_menu_icon_ai_writer_s,
+    isSelected: isSelected,
+    style: style,
+  ),
+  nameBuilder: slashMenuItemNameBuilder,
+);
+
+Future<void> _insertAiWriter(
+  EditorState editorState,
+  AiWriterCommand action,
+) async {
+  final selection = editorState.selection;
+  if (selection == null || !selection.isCollapsed) {
+    return;
   }
+
+  final node = editorState.getNodeAtPath(selection.end.path);
+  if (node == null || node.delta == null) {
+    return;
+  }
+  final newNode = aiWriterNode(
+    selection: selection,
+    command: action,
+  );
+
+  // default insert after
+  final path = node.path.next;
+  final transaction = editorState.transaction
+    ..insertNode(path, newNode)
+    ..afterSelection = null;
+
+  await editorState.apply(
+    transaction,
+    options: const ApplyOptions(
+      recordUndo: false,
+      inMemoryUpdate: true,
+    ),
+  );
 }
