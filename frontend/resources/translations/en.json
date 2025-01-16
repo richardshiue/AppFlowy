@@ -901,7 +901,6 @@
             "description": "Unlimited AI responses powered by advanced AI models, and 50 AI images per month",
             "price": "{}",
             "priceInfo": "Per user per month billed annually"
-
           },
           "aiOnDevice": {
             "title": "AI On-device for Mac",
@@ -1754,7 +1753,7 @@
       "smartEditCouldNotFetchKey": "Could not fetch AI key",
       "smartEditDisabled": "Connect AI in Settings",
       "appflowyAIEditDisabled": "Sign in to enable AI features",
-      "discardResponse": "Do you want to discard the AI responses?",
+      "discardResponse": "Are you sure you want to discard the AI response?",
       "createInlineMathEquation": "Create equation",
       "fonts": "Fonts",
       "insertDate": "Insert date",

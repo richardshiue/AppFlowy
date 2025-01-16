@@ -1,7 +1,5 @@
 import 'package:appflowy/ai/ai.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
-import 'package:appflowy/plugins/ai_chat/application/ai_prompt_input_bloc.dart';
-import 'package:appflowy/plugins/ai_chat/application/chat_entity.dart';
 import 'package:appflowy/plugins/ai_chat/application/chat_input_control_cubit.dart';
 import 'package:appflowy/workspace/application/view/view_ext.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -15,14 +13,12 @@ import '../layout_define.dart';
 class MobileChatInput extends StatefulWidget {
   const MobileChatInput({
     super.key,
-    required this.chatId,
     required this.isStreaming,
     required this.onStopStreaming,
     required this.onSubmitted,
     required this.onUpdateSelectedSources,
   });
 
-  final String chatId;
   final bool isStreaming;
   final void Function() onStopStreaming;
   final void Function(String, PredefinedFormat?, Map<String, dynamic>)
@@ -116,7 +112,6 @@ class _MobileChatInputState extends State<MobileChatInput> {
                             MobileAIPromptSizes.attachedFilesPreviewHeight,
                   ),
                   child: PromptInputFile(
-                    chatId: widget.chatId,
                     onDeleted: (file) => context
                         .read<AIPromptInputBloc>()
                         .add(AIPromptInputEvent.removeFile(file)),
