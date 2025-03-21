@@ -47,14 +47,11 @@ class AIPromptInputBloc extends Bloc<AIPromptInputEvent, AIPromptInputState> {
                 ? localAIState.state == RunningStatePB.Running
                 : true;
 
-            var hintText = aiType.isLocal
-                ? LocaleKeys.chat_inputLocalAIMessageHint.tr()
-                : LocaleKeys.chat_inputMessageHint.tr();
-
-            if (editable == false && aiType.isLocal) {
-              hintText =
-                  LocaleKeys.settings_aiPage_keys_localAIInitializing.tr();
-            }
+            final hintText = aiType.isCloud
+                ? LocaleKeys.chat_inputMessageHint.tr()
+                : editable
+                    ? LocaleKeys.chat_inputLocalAIMessageHint.tr()
+                    : LocaleKeys.settings_aiPage_keys_localAIInitializing.tr();
 
             emit(
               state.copyWith(
