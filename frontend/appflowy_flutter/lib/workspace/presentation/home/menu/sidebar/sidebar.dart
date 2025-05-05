@@ -22,7 +22,6 @@ import 'package:appflowy/workspace/application/sidebar/space/space_bloc.dart';
 import 'package:appflowy/workspace/application/tabs/tabs_bloc.dart';
 import 'package:appflowy/workspace/application/user/user_workspace_bloc.dart';
 import 'package:appflowy/workspace/application/view/view_ext.dart';
-import 'package:appflowy/workspace/presentation/command_palette/command_palette.dart';
 import 'package:appflowy/workspace/presentation/home/home_sizes.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/footer/sidebar_footer.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/footer/sidebar_upgarde_application_button.dart';
@@ -516,7 +515,7 @@ class _SidebarSearchButton extends StatelessWidget {
         onTap: () {
           // exit editing mode when doing search to avoid the toolbar showing up
           EditorNotification.exitEditing().post();
-          CommandPalette.of(context).toggle();
+          context.read<CommandPaletteBloc>().add(CommandPaletteEvent.toggle());
         },
         leftIcon: const FlowySvg(FlowySvgs.search_s),
         iconPadding: 12.0,

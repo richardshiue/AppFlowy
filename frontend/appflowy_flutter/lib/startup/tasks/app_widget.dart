@@ -257,10 +257,7 @@ class _ApplicationWidgetState extends State<ApplicationWidget> {
                             context,
                             !UniversalPlatform.isMobile &&
                                     FeatureFlag.search.isOn
-                                ? CommandPalette(
-                                    notifier: _commandPaletteNotifier,
-                                    child: child,
-                                  )
+                                ? CommandPalette(child: child)
                                 : child,
                           ),
                         ),

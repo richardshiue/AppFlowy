@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:appflowy/plugins/trash/application/trash_listener.dart';
 import 'package:appflowy/plugins/trash/application/trash_service.dart';
+import 'package:appflowy/util/debounce.dart';
 import 'package:appflowy/workspace/application/command_palette/search_service.dart';
 import 'package:appflowy_backend/protobuf/flowy-folder/trash.pb.dart';
 import 'package:appflowy_backend/protobuf/flowy-search/result.pb.dart';
@@ -10,22 +11,6 @@ import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'command_palette_bloc.freezed.dart';
-
-class Debouncer {
-  Debouncer({required this.delay});
-
-  final Duration delay;
-  Timer? _timer;
-
-  void run(void Function() action) {
-    _timer?.cancel();
-    _timer = Timer(delay, action);
-  }
-
-  void dispose() {
-    _timer?.cancel();
-  }
-}
 
 class CommandPaletteBloc
     extends Bloc<CommandPaletteEvent, CommandPaletteState> {
@@ -43,8 +28,8 @@ class CommandPaletteBloc
     _initTrash();
   }
 
-  final Debouncer _searchDebouncer = Debouncer(
-    delay: const Duration(milliseconds: 300),
+  final _searchDebouncer = Debounce(
+    duration: const Duration(milliseconds: 300),
   );
   final TrashService _trashService = TrashService();
   final TrashListener _trashListener = TrashListener();
@@ -82,7 +67,7 @@ class CommandPaletteBloc
     _SearchChanged event,
     Emitter<CommandPaletteState> emit,
   ) {
-    _searchDebouncer.run(
+    _searchDebouncer.call(
       () {
         if (!isClosed) {
           add(CommandPaletteEvent.performSearch(search: event.search));
@@ -302,6 +287,7 @@ class CommandPaletteBloc
 
 @freezed
 class CommandPaletteEvent with _$CommandPaletteEvent {
+  const factory CommandPaletteEvent.toggle() = _Toggle;
   const factory CommandPaletteEvent.searchChanged({required String search}) =
       _SearchChanged;
   const factory CommandPaletteEvent.performSearch({required String search}) =
@@ -348,7 +334,9 @@ class SearchResultItem {
 @freezed
 class CommandPaletteState with _$CommandPaletteState {
   const CommandPaletteState._();
+
   const factory CommandPaletteState({
+    @Default(false) bool isShowing,
     @Default(null) String? query,
     @Default([]) List<SearchResponseItemPB> serverResponseItems,
     @Default([]) List<LocalSearchResponseItemPB> localResponseItems,
