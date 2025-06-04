@@ -9,15 +9,14 @@ class DataLocationBloc extends Bloc<DataLocationEvent, DataLocationState> {
   DataLocationBloc({
     required SettingsRepository repository,
   })  : _repository = repository,
-        super(DataLocationState.initial()) {
-    on<DataLocationInitial>(_onStarted);
+        super(DataLocationLoading()) {
+    on<DataLocationInitial>(_onInitial);
     on<DataLocationResetToDefault>(_onResetToDefault);
-    on<DataLocationClearState>(_onClearState);
   }
 
   final SettingsRepository _repository;
 
-  Future<void> _onStarted(
+  Future<void> _onInitial(
     DataLocationInitial event,
     Emitter<DataLocationState> emit,
   ) async {
@@ -25,10 +24,9 @@ class DataLocationBloc extends Bloc<DataLocationEvent, DataLocationState> {
         await _repository.getUserDataLocation().toNullable();
 
     emit(
-      DataLocationState(
-        userDataLocation: userDataLocation,
-        didResetToDefault: false,
-      ),
+      userDataLocation == null
+          ? DataLocationLoading()
+          : DataLocationReady(userDataLocation: userDataLocation),
     );
   }
 
@@ -39,21 +37,16 @@ class DataLocationBloc extends Bloc<DataLocationEvent, DataLocationState> {
     final defaultLocation =
         await _repository.resetUserDataLocation().toNullable();
 
-    emit(
-      DataLocationState(
-        userDataLocation: defaultLocation,
-        didResetToDefault: true,
-      ),
-    );
-  }
+    if (defaultLocation == null) {
+      return;
+    }
 
-  Future<void> _onClearState(
-    DataLocationClearState event,
-    Emitter<DataLocationState> emit,
-  ) async {
     emit(
-      state.copyWith(
-        didResetToDefault: false,
+      DataLocationReset(),
+    );
+    emit(
+      DataLocationReady(
+        userDataLocation: defaultLocation,
       ),
     );
   }

@@ -42,18 +42,17 @@ class SettingsManageDataView extends StatelessWidget {
         repository: const RustSettingsRepositoryImpl(),
       )..add(DataLocationEvent.initial()),
       child: BlocConsumer<DataLocationBloc, DataLocationState>(
-        listenWhen: (previous, current) =>
-            previous.didResetToDefault != current.didResetToDefault,
         listener: (context, state) async {
-          if (state.didResetToDefault) {
-            context
-                .read<DataLocationBloc>()
-                .add(DataLocationEvent.clearState());
+          if (state is DataLocationReset) {
             await runAppFlowy(isAnon: true);
           }
         },
         builder: (context, state) {
-          final isCustom = state.userDataLocation?.isCustom ?? false;
+          final isCustom = switch (state) {
+            DataLocationReady(userDataLocation: final userDataLocation) =>
+              userDataLocation.isCustom,
+            _ => false,
+          };
 
           return SettingsBody(
             title: LocaleKeys.settings_manageDataPage_title.tr(),
@@ -100,14 +99,14 @@ class SettingsManageDataView extends StatelessWidget {
                       },
                     ),
                 ],
-                children: state.userDataLocation == null
-                    ? [
-                        const CircularProgressIndicator(),
-                      ]
-                    : [
-                        _CurrentPath(path: state.userDataLocation!.path),
-                        // _DataPathActions(currentPath: state.userDataLocation!.path),
-                      ],
+                children: switch (state) {
+                  DataLocationReady(userDataLocation: final userDataLocation) =>
+                    [
+                      _CurrentPath(path: userDataLocation.path),
+                      // _DataPathActions(currentPath: userDataLocation.path),
+                    ],
+                  _ => [const CircularProgressIndicator()],
+                },
               ),
               SettingsCategory(
                 title: LocaleKeys.settings_manageDataPage_importData_title.tr(),

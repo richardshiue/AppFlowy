@@ -1,24 +1,25 @@
 import '../data/models/user_data_location.dart';
 
-class DataLocationState {
-  const DataLocationState({
-    required this.userDataLocation,
-    required this.didResetToDefault,
-  });
+sealed class DataLocationState {
+  const DataLocationState();
+}
 
-  factory DataLocationState.initial() =>
-      const DataLocationState(userDataLocation: null, didResetToDefault: false);
+class DataLocationLoading extends DataLocationState {
+  const DataLocationLoading();
+}
 
-  final UserDataLocation? userDataLocation;
-  final bool didResetToDefault;
+class DataLocationReady extends DataLocationState {
+  const DataLocationReady({required this.userDataLocation});
 
-  DataLocationState copyWith({
-    UserDataLocation? userDataLocation,
-    bool? didResetToDefault,
-  }) {
-    return DataLocationState(
+  final UserDataLocation userDataLocation;
+
+  DataLocationReady copyWith({UserDataLocation? userDataLocation}) {
+    return DataLocationReady(
       userDataLocation: userDataLocation ?? this.userDataLocation,
-      didResetToDefault: didResetToDefault ?? this.didResetToDefault,
     );
   }
+}
+
+class DataLocationReset extends DataLocationState {
+  const DataLocationReset();
 }
