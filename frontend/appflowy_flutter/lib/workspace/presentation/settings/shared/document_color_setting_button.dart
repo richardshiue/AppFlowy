@@ -1,16 +1,15 @@
+import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:flutter/material.dart';
 
 import 'package:appflowy/generated/flowy_svgs.g.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/util/color_to_hex_string.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_alert_dialog.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/utils/hex_opacity_string_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flowy_infra/size.dart';
 import 'package:flowy_infra/theme_extension.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';
-import 'package:flowy_infra_ui/widget/dialog/styled_dialogs.dart';
 
 class DocumentColorSettingButton extends StatefulWidget {
   const DocumentColorSettingButton({
@@ -48,37 +47,45 @@ class _DocumentColorSettingButtonState
       text: widget.previewWidgetBuilder.call(widget.currentColor),
       hoverColor: Theme.of(context).colorScheme.secondaryContainer,
       expandText: false,
-      onTap: () => SettingsAlertDialog(
-        title: widget.dialogTitle,
-        confirm: () {
-          widget.onApply(newColor);
-          Navigator.of(context).pop();
-        },
-        children: [
-          _DocumentColorSettingDialog(
-            formKey: GlobalKey<FormState>(),
-            currentColor: widget.currentColor,
-            previewWidgetBuilder: widget.previewWidgetBuilder,
-            onChanged: (color) => newColor = color,
-          ),
-        ],
-      ).show(context),
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return _DocumentColorSettingDialog(
+              formKey: GlobalKey<FormState>(),
+              title: widget.dialogTitle,
+              currentColor: widget.currentColor,
+              previewWidgetBuilder: widget.previewWidgetBuilder,
+              onChanged: (color) {
+                newColor = color;
+              },
+              onConfirm: () {
+                widget.onApply(newColor);
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
 
 class _DocumentColorSettingDialog extends StatefulWidget {
   const _DocumentColorSettingDialog({
+    required this.title,
     required this.formKey,
     required this.currentColor,
     required this.previewWidgetBuilder,
     required this.onChanged,
+    required this.onConfirm,
   });
 
+  final String title;
   final GlobalKey<FormState> formKey;
   final Color currentColor;
   final Widget Function(Color?) previewWidgetBuilder;
   final void Function(Color selectedColor) onChanged;
+  final VoidCallback onConfirm;
 
   @override
   State<_DocumentColorSettingDialog> createState() =>
@@ -116,57 +123,113 @@ class DocumentColorSettingDialogState
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          width: 100,
-          height: 40,
-          child: Center(
-            child: widget.previewWidgetBuilder(
-              selectedColorOnDialog,
+    final theme = AppFlowyTheme.of(context);
+
+    return AFModal(
+      constraints: BoxConstraints(
+        maxWidth: 400,
+        maxHeight: 300,
+      ),
+      child: Column(
+        children: [
+          AFModalHeader(
+            leading: Text(
+              widget.title,
+              style: theme.textStyle.heading4.prominent(
+                color: theme.textColorScheme.primary,
+              ),
             ),
-          ),
-        ),
-        const VSpace(8),
-        Form(
-          key: widget.formKey,
-          child: Column(
-            children: [
-              _ColorSettingTextField(
-                controller: hexController,
-                labelText: LocaleKeys.editor_hexValue.tr(),
-                hintText: '6fc9e7',
-                onChanged: (_) => _updateSelectedColor(),
-                onFieldSubmitted: (_) => _updateSelectedColor(),
-                validator: (v) => validateHexValue(v, opacityController.text),
-                suffixIcon: Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: FlowyIconButton(
-                    onPressed: () => _showColorPickerDialog(
-                      context: context,
-                      currentColor: widget.currentColor,
-                      updateColor: _updateColor,
-                    ),
-                    icon: const FlowySvg(
-                      FlowySvgs.m_aa_color_s,
+            trailing: [
+              AFGhostButton.normal(
+                onTap: () => Navigator.of(context).pop(),
+                padding: EdgeInsets.all(theme.spacing.xs),
+                builder: (context, isHovering, disabled) {
+                  return Center(
+                    child: FlowySvg(
+                      FlowySvgs.toast_close_s,
                       size: Size.square(20),
                     ),
-                  ),
-                ),
-              ),
-              const VSpace(8),
-              _ColorSettingTextField(
-                controller: opacityController,
-                labelText: LocaleKeys.editor_opacity.tr(),
-                hintText: '50',
-                onChanged: (_) => _updateSelectedColor(),
-                onFieldSubmitted: (_) => _updateSelectedColor(),
-                validator: (value) => validateOpacityValue(value),
+                  );
+                },
               ),
             ],
           ),
-        ),
-      ],
+          Expanded(
+            child: AFModalBody(
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 100,
+                    height: 40,
+                    child: Center(
+                      child: widget.previewWidgetBuilder(
+                        selectedColorOnDialog,
+                      ),
+                    ),
+                  ),
+                  const VSpace(8),
+                  Form(
+                    key: widget.formKey,
+                    child: Column(
+                      children: [
+                        _ColorSettingTextField(
+                          controller: hexController,
+                          labelText: LocaleKeys.editor_hexValue.tr(),
+                          hintText: '6fc9e7',
+                          onChanged: (_) => _updateSelectedColor(),
+                          onFieldSubmitted: (_) => _updateSelectedColor(),
+                          validator: (v) =>
+                              validateHexValue(v, opacityController.text),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: FlowyIconButton(
+                              onPressed: () => _showColorPickerDialog(
+                                context: context,
+                                currentColor: widget.currentColor,
+                                updateColor: _updateColor,
+                              ),
+                              icon: const FlowySvg(
+                                FlowySvgs.m_aa_color_s,
+                                size: Size.square(20),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const VSpace(8),
+                        _ColorSettingTextField(
+                          controller: opacityController,
+                          labelText: LocaleKeys.editor_opacity.tr(),
+                          hintText: '50',
+                          onChanged: (_) => _updateSelectedColor(),
+                          onFieldSubmitted: (_) => _updateSelectedColor(),
+                          validator: (value) => validateOpacityValue(value),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AFModalFooter(
+            trailing: [
+              AFOutlinedTextButton.normal(
+                text: LocaleKeys.button_cancel.tr(),
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              AFFilledTextButton.primary(
+                text: LocaleKeys.button_confirm.tr(),
+                onTap: () {
+                  widget.onConfirm();
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

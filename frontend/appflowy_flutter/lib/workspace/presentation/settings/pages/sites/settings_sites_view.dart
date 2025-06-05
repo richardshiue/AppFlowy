@@ -1,13 +1,13 @@
 import 'package:appflowy/features/workspace/data/repositories/rust_workspace_repository_impl.dart';
 import 'package:appflowy/features/workspace/logic/workspace_bloc.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
+import 'package:appflowy/workspace/application/settings/prelude.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/constants.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/domain/domain_header.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/domain/domain_item.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/published_page/published_view_item.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/published_page/published_view_item_header.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/settings_sites_bloc.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_category.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy_backend/log.dart';
@@ -16,6 +16,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../shared/settings_body.dart';
 
 class SettingsSitesPage extends StatelessWidget {
   const SettingsSitesPage({
@@ -57,8 +59,7 @@ class _SettingsSitesPageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SettingsBody(
-      title: LocaleKeys.settings_sites_title.tr(),
-      autoSeparate: false,
+      page: SettingsPage.sites,
       children: [
         // Domain / Namespace
         _buildNamespaceCategory(context),

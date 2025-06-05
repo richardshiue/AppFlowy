@@ -1,7 +1,7 @@
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/user/presentation/screens/sign_in_screen/widgets/widgets.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/account/account.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/setting_appflowy_cloud.dart';
+import 'package:appflowy/workspace/presentation/settings/pages/cloud/cloud_server.dart';
 import 'package:appflowy/workspace/presentation/widgets/toggle/toggle.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';

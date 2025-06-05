@@ -2,9 +2,11 @@ import 'package:appflowy/core/config/kv.dart';
 import 'package:appflowy/core/config/kv_keys.dart';
 import 'package:appflowy/env/backend_env.dart';
 import 'package:appflowy/env/env.dart';
+import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/plugins/shared/share/constants.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy_backend/log.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Sets the cloud type for the application.
 ///
@@ -39,6 +41,7 @@ Future<void> _setAuthenticatorType(AuthenticatorType ty) async {
 }
 
 const String kAppflowyCloudUrl = "https://beta.appflowy.cloud";
+const String kLocalUrl = "https://localhost";
 
 /// Retrieves the currently set cloud type.
 ///
@@ -149,6 +152,17 @@ enum AuthenticatorType {
       default:
         return AuthenticatorType.local;
     }
+  }
+
+  String get i18n {
+    return switch (this) {
+      AuthenticatorType.local => LocaleKeys.settings_menu_cloudLocal.tr(),
+      AuthenticatorType.appflowyCloud =>
+        LocaleKeys.settings_menu_cloudAppFlowy.tr(),
+      AuthenticatorType.appflowyCloudSelfHost =>
+        LocaleKeys.settings_menu_cloudAppFlowySelfHost.tr(),
+      AuthenticatorType.appflowyCloudDevelop => "AppFlowyCloud Develop",
+    };
   }
 }
 

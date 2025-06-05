@@ -15,12 +15,18 @@ typedef SimpleAFDialogAction = (String, void Function(BuildContext)?);
 Future<void> showSimpleAFDialog({
   required BuildContext context,
   required String title,
-  required String content,
+  String? content,
+  TextSpan? contentSpan,
   bool isDestructive = false,
   required SimpleAFDialogAction primaryAction,
   SimpleAFDialogAction? secondaryAction,
   bool barrierDismissible = true,
 }) {
+  assert(
+    content != null || contentSpan != null,
+    'Either content or contentSpan must be provided',
+  );
+
   final theme = AppFlowyTheme.of(context);
 
   return showDialog(
@@ -57,12 +63,16 @@ Future<void> showSimpleAFDialog({
                 // AFModalDimension.dialogHeight - header - footer
                 constraints: BoxConstraints(minHeight: 108.0),
                 child: AFModalBody(
-                  child: Text(
-                    content,
-                    style: theme.textStyle.body.standard(
-                      color: theme.textColorScheme.primary,
-                    ),
-                  ),
+                  child: content != null
+                      ? Text(
+                          content,
+                          style: theme.textStyle.body.standard(
+                            color: theme.textColorScheme.primary,
+                          ),
+                        )
+                      : RichText(
+                          text: contentSpan!,
+                        ),
                 ),
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:appflowy/generated/flowy_svgs.g.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
+import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/material.dart';
@@ -10,46 +11,58 @@ class SettingListTile extends StatelessWidget {
     this.resetTooltipText,
     this.resetButtonKey,
     required this.label,
-    this.hint,
+    this.description = '',
+    this.isCategory = false,
     this.trailing,
-    this.subtitle,
     this.onResetRequested,
   });
 
   final String label;
-  final String? hint;
+  final String description;
   final String? resetTooltipText;
   final Key? resetButtonKey;
+  final bool isCategory;
   final List<Widget>? trailing;
-  final List<Widget>? subtitle;
   final VoidCallback? onResetRequested;
 
   @override
   Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
+
+    final categoryTitleTextStyle = theme.textStyle.heading4.enhanced(
+      color: theme.textColorScheme.primary,
+    );
+    final bodyTextStyle = theme.textStyle.body.enhanced(
+      color: theme.textColorScheme.primary,
+    );
+    final captionTextStyle = theme.textStyle.caption.standard(
+      color: theme.textColorScheme.secondary,
+    );
+
     return Row(
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FlowyText.medium(
+              Text(
                 label,
-                fontSize: 14,
+                style: isCategory ? categoryTitleTextStyle : bodyTextStyle,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (hint != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: FlowyText.regular(
-                    hint!,
-                    fontSize: 10,
-                    color: Theme.of(context).hintColor,
-                  ),
+              if (description.isNotEmpty) ...[
+                VSpace(theme.spacing.xs),
+                Text(
+                  description,
+                  style: captionTextStyle,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
-              if (subtitle != null) ...subtitle!,
+              ],
             ],
           ),
         ),
+        const HSpace(24),
         if (trailing != null) ...trailing!,
         if (onResetRequested != null)
           SettingsResetButton(

@@ -3,7 +3,6 @@ import 'package:appflowy/mobile/presentation/setting/cloud/appflowy_cloud_page.d
 import 'package:appflowy/mobile/presentation/setting/widgets/mobile_setting_group_widget.dart';
 import 'package:appflowy/mobile/presentation/setting/widgets/mobile_setting_item_widget.dart';
 import 'package:appflowy/mobile/presentation/setting/widgets/mobile_setting_trailing.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/setting_cloud.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,7 +17,7 @@ class CloudSettingGroup extends StatelessWidget {
       future: getAuthenticatorType(),
       builder: (context, snapshot) {
         final cloudType = snapshot.data ?? AuthenticatorType.appflowyCloud;
-        final name = titleFromCloudType(cloudType);
+        final name = cloudType.i18n;
         return MobileSettingGroup(
           groupTitle: 'Cloud settings',
           settingItemList: [

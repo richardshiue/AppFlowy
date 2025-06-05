@@ -5,8 +5,8 @@ import 'package:appflowy/plugins/document/presentation/editor_plugins/copy_and_p
 import 'package:appflowy/shared/af_role_pb_extension.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/user/application/user_service.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/members/invitation/m_invite_member_by_email.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/members/workspace_member_bloc.dart';
+import 'package:appflowy/workspace/presentation/settings/pages/members/invitation/m_invite_member_by_email.dart';
+import 'package:appflowy/workspace/presentation/settings/pages/members/workspace_member_bloc.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy_backend/log.dart';
 import 'package:appflowy_backend/protobuf/flowy-error/code.pb.dart';

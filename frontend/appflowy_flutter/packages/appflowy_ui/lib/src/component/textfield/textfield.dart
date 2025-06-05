@@ -173,7 +173,7 @@ class _AFTextFieldState extends AFTextFieldState {
       borderRadius: borderRadius,
     );
 
-    Widget child = TextField(
+    final child = TextField(
       groupId: widget.groupId,
       focusNode: widget.focusNode,
       controller: effectiveController,
@@ -207,23 +207,20 @@ class _AFTextFieldState extends AFTextFieldState {
       ),
     );
 
-    if (hasError && errorText.isNotEmpty) {
-      child = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          child,
-          SizedBox(height: theme.spacing.xs),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: theme.spacing.xs,
+      children: [
+        child,
+        if (hasError && errorText.isNotEmpty)
           Text(
             errorText,
             style: theme.textStyle.caption.standard(
               color: theme.textColorScheme.error,
             ),
           ),
-        ],
-      );
-    }
-
-    return child;
+      ],
+    );
   }
 
   void _validate() {

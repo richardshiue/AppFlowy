@@ -9,7 +9,7 @@ import 'package:appflowy/user/presentation/screens/sign_in_screen/widgets/contin
 import 'package:appflowy/util/navigator_context_extension.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/account/password/change_password.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/account/password/setup_password.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/setting_third_party_login.dart';
+import 'package:appflowy/workspace/presentation/settings/pages/account/account_third_party_login.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy_backend/protobuf/flowy-user/user_profile.pb.dart';
 import 'package:appflowy_ui/appflowy_ui.dart';

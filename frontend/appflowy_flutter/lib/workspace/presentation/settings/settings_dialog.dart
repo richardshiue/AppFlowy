@@ -6,23 +6,12 @@ import 'package:appflowy/shared/appflowy_cache_manager.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/util/share_log_files.dart';
 import 'package:appflowy/workspace/application/settings/appearance/appearance_cubit.dart';
-import 'package:appflowy/workspace/application/settings/appflowy_cloud_urls_bloc.dart';
+import 'package:appflowy/workspace/application/settings/cloud_setting_bloc.dart';
 import 'package:appflowy/workspace/application/settings/settings_dialog_bloc.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/setting_ai_view/settings_ai_view.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/settings_account_view.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/settings_billing_view.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/settings_manage_data_view.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/settings_plan_view.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/settings_shortcuts_view.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/settings_workspace_view.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/sites/settings_sites_view.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/af_dropdown_menu_entry.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_category.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_dropdown.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/feature_flags/feature_flag_page.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/members/workspace_member_page.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/settings_menu.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/settings_notifications_view.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/web_url_hint_widget.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy_backend/log.dart';
@@ -33,8 +22,19 @@ import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'pages/setting_ai_view/local_settings_ai_view.dart';
-import 'widgets/setting_cloud.dart';
+import 'pages/account/account.dart';
+import 'pages/ai/cloud_ai_view.dart';
+import 'pages/ai/local_ai_view.dart';
+import 'pages/billing/billing_view.dart';
+import 'pages/feature_flags/feature_flags_view.dart';
+import 'pages/manage_data/manage_data_view.dart';
+import 'pages/members/workspace_member_page.dart';
+import 'pages/notifications_view.dart';
+import 'pages/plan_view.dart';
+import 'pages/shortcuts_view.dart';
+import 'pages/workspace_view.dart';
+import 'pages/sites/settings_sites_view.dart';
+import 'pages/cloud/cloud_view.dart';
 
 @visibleForTesting
 const kSelfHostedTextInputFieldKey =
@@ -48,7 +48,6 @@ class SettingsDialog extends StatelessWidget {
     this.user, {
     required this.dismissDialog,
     required this.didLogout,
-    required this.restartApp,
     this.initPage,
   }) : super(key: ValueKey(user.id));
 
@@ -56,14 +55,13 @@ class SettingsDialog extends StatelessWidget {
   final SettingsPage? initPage;
   final VoidCallback dismissDialog;
   final VoidCallback didLogout;
-  final VoidCallback restartApp;
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width * 0.6;
     final theme = AppFlowyTheme.of(context);
     final currentWorkspaceMemberRole =
         context.read<UserWorkspaceBloc>().state.currentWorkspace?.role;
+
     return BlocProvider<SettingsDialogBloc>(
       create: (context) => SettingsDialogBloc(
         user,
@@ -71,49 +69,53 @@ class SettingsDialog extends StatelessWidget {
         initPage: initPage,
       )..add(const SettingsDialogEvent.initial()),
       child: BlocBuilder<SettingsDialogBloc, SettingsDialogState>(
-        builder: (context, state) => FlowyDialog(
-          width: width,
-          constraints: const BoxConstraints(minWidth: 564),
-          child: ScaffoldMessenger(
-            child: Scaffold(
-              backgroundColor: theme.backgroundColorScheme.primary,
-              body: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 204,
-                    child: SettingsMenu(
-                      userProfile: user,
-                      changeSelectedPage: (index) => context
-                          .read<SettingsDialogBloc>()
-                          .add(SettingsDialogEvent.setSelectedPage(index)),
-                      currentPage:
-                          context.read<SettingsDialogBloc>().state.page,
-                      currentUserRole: currentWorkspaceMemberRole,
-                      isBillingEnabled: state.isBillingEnabled,
+        builder: (context, settingsState) {
+          return AFModal(
+            constraints: BoxConstraints(
+              maxHeight: 630,
+              maxWidth: 900,
+              minWidth: 564,
+            ),
+            backgroundColor: theme.backgroundColorScheme.primary,
+            child: ScaffoldMessenger(
+              child: Scaffold(
+                backgroundColor: Colors.transparent,
+                body: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 204,
+                      child: SettingsMenu(
+                        userProfile: user,
+                        changeSelectedPage: (index) => context
+                            .read<SettingsDialogBloc>()
+                            .add(SettingsDialogEvent.setSelectedPage(index)),
+                        currentPage: settingsState.page,
+                        currentUserRole: currentWorkspaceMemberRole,
+                        isBillingEnabled: settingsState.isBillingEnabled,
+                      ),
                     ),
-                  ),
-                  AFDivider(
-                    axis: Axis.vertical,
-                    color: theme.borderColorScheme.primary,
-                  ),
-                  BlocBuilder<UserWorkspaceBloc, UserWorkspaceState>(
-                    builder: (context, state) {
-                      return Expanded(
-                        child: getSettingsView(
-                          state.currentWorkspace!,
-                          context.read<SettingsDialogBloc>().state.page,
-                          state.userProfile,
-                          state.currentWorkspace?.role,
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                    AFDivider(
+                      axis: Axis.vertical,
+                    ),
+                    BlocBuilder<UserWorkspaceBloc, UserWorkspaceState>(
+                      builder: (context, userWorkspaceState) {
+                        return Expanded(
+                          child: getSettingsView(
+                            userWorkspaceState.currentWorkspace!,
+                            settingsState.page,
+                            userWorkspaceState.userProfile,
+                            userWorkspaceState.currentWorkspace?.role,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -124,67 +126,51 @@ class SettingsDialog extends StatelessWidget {
     UserProfilePB user,
     AFRolePB? currentWorkspaceMemberRole,
   ) {
-    switch (page) {
-      case SettingsPage.account:
-        return SettingsAccountView(
+    return switch (page) {
+      SettingsPage.account => SettingsAccountView(
           userProfile: user,
           didLogout: didLogout,
           didLogin: dismissDialog,
-        );
-      case SettingsPage.workspace:
-        return SettingsWorkspaceView(
+        ),
+      SettingsPage.workspace => SettingsWorkspaceView(
           userProfile: user,
           currentWorkspaceMemberRole: currentWorkspaceMemberRole,
-        );
-      case SettingsPage.manageData:
-        return SettingsManageDataView(
+        ),
+      SettingsPage.manageData => SettingsManageDataView(
           userProfile: user,
           workspace: workspace,
-        );
-      case SettingsPage.notifications:
-        return const SettingsNotificationsView();
-      case SettingsPage.cloud:
-        return SettingCloud(restartAppFlowy: () => restartApp());
-      case SettingsPage.shortcuts:
-        return const SettingsShortcutsView();
-      case SettingsPage.ai:
-        if (user.workspaceType == WorkspaceTypePB.ServerW) {
-          return SettingsAIView(
-            key: ValueKey(workspace.workspaceId),
-            userProfile: user,
-            currentWorkspaceMemberRole: currentWorkspaceMemberRole,
-            workspaceId: workspace.workspaceId,
-          );
-        } else {
-          return LocalSettingsAIView(
-            key: ValueKey(workspace.workspaceId),
-            userProfile: user,
-            workspaceId: workspace.workspaceId,
-          );
-        }
-      case SettingsPage.member:
-        return WorkspaceMembersPage(
+        ),
+      SettingsPage.notifications => const SettingsNotificationsView(),
+      SettingsPage.cloud => const SettingCloudView(),
+      SettingsPage.shortcuts => const SettingsShortcutsView(),
+      SettingsPage.ai when workspace.workspaceType == WorkspaceTypePB.ServerW =>
+        SettingsAIView(
+          userProfile: user,
+          currentWorkspaceMemberRole: currentWorkspaceMemberRole,
+          workspaceId: workspace.workspaceId,
+        ),
+      SettingsPage.ai => LocalSettingsAIView(
           userProfile: user,
           workspaceId: workspace.workspaceId,
-        );
-      case SettingsPage.plan:
-        return SettingsPlanView(
+        ),
+      SettingsPage.member => WorkspaceMembersPage(
+          userProfile: user,
+          workspaceId: workspace.workspaceId,
+        ),
+      SettingsPage.plan => SettingsPlanView(
           workspaceId: workspace.workspaceId,
           user: user,
-        );
-      case SettingsPage.billing:
-        return SettingsBillingView(
+        ),
+      SettingsPage.billing => SettingsBillingView(
           workspaceId: workspace.workspaceId,
           user: user,
-        );
-      case SettingsPage.sites:
-        return SettingsSitesPage(
+        ),
+      SettingsPage.sites => SettingsSitesPage(
           workspaceId: workspace.workspaceId,
           user: user,
-        );
-      case SettingsPage.featureFlags:
-        return const FeatureFlagsPage();
-    }
+        ),
+      SettingsPage.featureFlags => const FeatureFlagsPage(),
+    };
   }
 }
 
@@ -382,7 +368,7 @@ class _SelfHostSettingsState extends State<_SelfHostSettings> {
       return;
     }
 
-    final isValid = await _validateUrl(cloudUrl) && await _validateUrl(webUrl);
+    final isValid = _validateUrl(cloudUrl) && _validateUrl(webUrl);
 
     if (mounted) {
       if (isValid) {
@@ -405,11 +391,9 @@ class _SelfHostSettingsState extends State<_SelfHostSettings> {
     }
   }
 
-  Future<bool> _validateUrl(String url) async {
-    return await validateUrl(url).fold(
-      (url) async {
-        return true;
-      },
+  bool _validateUrl(String url) {
+    return validateUrl(url).fold(
+      (url) => true,
       (err) {
         Log.error(err);
         return false;

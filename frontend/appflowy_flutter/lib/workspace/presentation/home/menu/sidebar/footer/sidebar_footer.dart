@@ -7,9 +7,11 @@ import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/workspace/application/tabs/tabs_bloc.dart';
 import 'package:appflowy/workspace/presentation/home/menu/menu_shared_state.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/footer/sidebar_toast.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/setting_appflowy_cloud.dart';
+import 'package:appflowy_backend/dispatch/dispatch.dart';
+import 'package:appflowy_backend/log.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flowy_infra/theme_extension.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'sidebar_footer_button.dart';
@@ -108,4 +110,52 @@ class SidebarWidgetButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class BillingGateGuard extends StatelessWidget {
+  const BillingGateGuard({required this.builder, super.key});
+
+  final Widget Function(BuildContext context) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: isBillingEnabled(),
+      builder: (context, snapshot) {
+        final isBillingEnabled = snapshot.data ?? false;
+        if (isBillingEnabled &&
+            snapshot.connectionState == ConnectionState.done) {
+          return builder(context);
+        }
+
+        // If the billing is not enabled, show nothing
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}
+
+Future<bool> isBillingEnabled() async {
+  final result = await UserEventGetCloudConfig().send();
+  return result.fold(
+    (cloudSetting) {
+      final whiteList = [
+        "https://beta.appflowy.cloud",
+        "https://test.appflowy.cloud",
+      ];
+      if (kDebugMode) {
+        whiteList.add("http://localhost:8000");
+      }
+
+      final isWhiteListed = whiteList.contains(cloudSetting.serverUrl);
+      if (!isWhiteListed) {
+        Log.warn("Billing is not enabled for server ${cloudSetting.serverUrl}");
+      }
+      return isWhiteListed;
+    },
+    (err) {
+      Log.error("Failed to get cloud config: $err");
+      return false;
+    },
+  );
 }

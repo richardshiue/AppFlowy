@@ -1,5 +1,7 @@
+import 'package:appflowy/generated/locale_keys.g.dart';
+import 'package:appflowy/workspace/application/settings/prelude.dart';
 import 'package:appflowy_ui/appflowy_ui.dart';
-import 'package:flowy_infra_ui/flowy_infra_ui.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 /// Renders a simple header for the settings view
@@ -7,41 +9,64 @@ import 'package:flutter/material.dart';
 class SettingsHeader extends StatelessWidget {
   const SettingsHeader({
     super.key,
-    required this.title,
-    this.description,
-    this.descriptionBuilder,
+    required this.page,
   });
 
-  final String title;
-  final String? description;
-  final WidgetBuilder? descriptionBuilder;
+  final SettingsPage page;
 
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: theme.spacing.xs,
       children: [
         Text(
-          title,
+          page.i18n,
           style: theme.textStyle.heading2.enhanced(
             color: theme.textColorScheme.primary,
           ),
         ),
-        if (descriptionBuilder != null) ...[
-          VSpace(theme.spacing.xs),
-          descriptionBuilder!(context),
-        ] else if (description?.isNotEmpty == true) ...[
-          VSpace(theme.spacing.xs),
-          Text(
-            description!,
-            maxLines: 4,
-            style: theme.textStyle.caption.standard(
-              color: theme.textColorScheme.secondary,
-            ),
-          ),
-        ],
+        _Description(
+          page: page,
+        ),
       ],
     );
+  }
+}
+
+class _Description extends StatelessWidget {
+  const _Description({
+    required this.page,
+  });
+
+  final SettingsPage page;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
+    final textStyle = theme.textStyle.caption.standard(
+      color: theme.textColorScheme.secondary,
+    );
+
+    return switch (page) {
+      SettingsPage.ai => Text(
+          LocaleKeys.settings_aiPage_keys_aiSettingsDescription.tr(),
+          style: textStyle,
+          maxLines: 4,
+        ),
+      SettingsPage.workspace => Text(
+          LocaleKeys.settings_workspacePage_description.tr(),
+          style: textStyle,
+          maxLines: 4,
+        ),
+      SettingsPage.manageData => Text(
+          LocaleKeys.settings_manageDataPage_description.tr(),
+          style: textStyle,
+          maxLines: 4,
+        ),
+      _ => const SizedBox.shrink(),
+    };
   }
 }

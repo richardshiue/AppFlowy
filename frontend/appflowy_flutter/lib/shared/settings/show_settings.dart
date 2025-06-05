@@ -44,11 +44,6 @@ void showSettingsDialog(
           }
           Log.warn("Can't pop dialog context");
         },
-        restartApp: () async {
-          // Pop the dialog using the dialog context
-          Navigator.of(dialogContext).pop();
-          await runAppFlowy();
-        },
       ),
     ),
   );

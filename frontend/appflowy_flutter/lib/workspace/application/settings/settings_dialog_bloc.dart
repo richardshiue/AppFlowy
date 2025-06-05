@@ -1,3 +1,4 @@
+import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/user/application/user_listener.dart';
 import 'package:appflowy_backend/dispatch/dispatch.dart';
 import 'package:appflowy_backend/log.dart';
@@ -5,6 +6,7 @@ import 'package:appflowy_backend/protobuf/flowy-error/errors.pb.dart';
 import 'package:appflowy_backend/protobuf/flowy-user/user_profile.pb.dart';
 import 'package:appflowy_backend/protobuf/flowy-user/workspace.pb.dart';
 import 'package:appflowy_result/appflowy_result.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -25,7 +27,24 @@ enum SettingsPage {
   notifications,
   cloud,
   member,
-  featureFlags,
+  featureFlags;
+
+  String get i18n {
+    return switch (this) {
+      account => LocaleKeys.newSettings_myAccount_title.tr(),
+      workspace => LocaleKeys.settings_workspacePage_title.tr(),
+      manageData => LocaleKeys.settings_manageDataPage_title.tr(),
+      shortcuts => LocaleKeys.settings_shortcutsPage_title.tr(),
+      ai => LocaleKeys.settings_aiPage_title.tr(),
+      plan => LocaleKeys.settings_planPage_title.tr(),
+      billing => LocaleKeys.settings_billingPage_title.tr(),
+      sites => LocaleKeys.settings_sites_title.tr(),
+      notifications => LocaleKeys.settings_menu_notifications.tr(),
+      cloud => LocaleKeys.settings_menu_cloudSettings.tr(),
+      member => LocaleKeys.settings_appearance_members_title.tr(),
+      featureFlags => 'Feature Flags',
+    };
+  }
 }
 
 class SettingsDialogBloc
