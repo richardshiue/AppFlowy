@@ -11,9 +11,8 @@ import 'package:appflowy/shared/error_page/error_page.dart';
 import 'package:appflowy/workspace/application/settings/shortcuts/settings_shortcuts_cubit.dart';
 import 'package:appflowy/workspace/application/settings/shortcuts/settings_shortcuts_service.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/space/shared_widget.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_alert_dialog.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/emoji_picker/emoji_shortcut_event.dart';
+import 'package:appflowy/workspace/presentation/widgets/dialog_v2.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:appflowy_editor_plugins/appflowy_editor_plugins.dart';
@@ -45,9 +44,7 @@ class _SettingsShortcutsViewState extends State<SettingsShortcutsView> {
       create: (_) =>
           ShortcutsCubit(SettingsShortcutService())..fetchShortcuts(),
       child: Builder(
-        builder: (context) => SettingsBody(
-          title: LocaleKeys.settings_shortcutsPage_title.tr(),
-          autoSeparate: false,
+        builder: (context) => Column(
           children: [
             Row(
               children: [
@@ -230,48 +227,44 @@ class _ShortcutSettingTileState extends State<ShortcutSettingTile> {
 
           if (conflict != null) {
             canClickOutside = true;
-            SettingsAlertDialog(
+            final theme = AppFlowyTheme.of(context);
+            final textStyle = theme.textStyle.body.standard(
+              color: theme.textColorScheme.primary,
+            );
+
+            showSimpleAFDialog(
+              context: context,
               title: LocaleKeys.settings_shortcutsPage_conflictDialog_title
                   .tr(args: [keybindController.text]),
-              confirm: () {
-                conflict.clearCommand();
-                _updateCommand();
-                Navigator.of(context).pop();
-              },
-              confirmLabel: LocaleKeys
-                  .settings_shortcutsPage_conflictDialog_confirmLabel
-                  .tr(),
-              children: [
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.normal,
-                        ),
-                    children: [
-                      TextSpan(
-                        text: LocaleKeys
-                            .settings_shortcutsPage_conflictDialog_descriptionPrefix
-                            .tr(),
-                      ),
-                      TextSpan(
-                        text: conflict.afLabel,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      TextSpan(
-                        text: LocaleKeys
-                            .settings_shortcutsPage_conflictDialog_descriptionSuffix
-                            .tr(args: [keybindController.text]),
-                      ),
-                    ],
+              contentSpan: TextSpan(
+                style: textStyle,
+                children: [
+                  TextSpan(
+                    text: LocaleKeys
+                        .settings_shortcutsPage_conflictDialog_descriptionPrefix
+                        .tr(),
                   ),
-                ),
-              ],
-            ).show(context).then((_) => canClickOutside = false);
+                  TextSpan(
+                    text: conflict.afLabel,
+                    style: textStyle.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(
+                    text: LocaleKeys
+                        .settings_shortcutsPage_conflictDialog_descriptionSuffix
+                        .tr(args: [keybindController.text]),
+                  ),
+                ],
+              ),
+              primaryAction: (
+                LocaleKeys.settings_shortcutsPage_conflictDialog_confirmLabel
+                    .tr(),
+                (context) {
+                  conflict.clearCommand();
+                  _updateCommand();
+                }
+              ),
+              secondaryAction: (LocaleKeys.button_cancel.tr(), (context) {}),
+            ).then((_) => canClickOutside = false);
           } else {
             _updateCommand();
           }

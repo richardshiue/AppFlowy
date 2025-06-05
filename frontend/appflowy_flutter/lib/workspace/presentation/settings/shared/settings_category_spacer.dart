@@ -17,14 +17,13 @@ class SettingsCategorySpacer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(
-        top: topSpacing ?? theme.spacing.l,
-        bottom: bottomSpacing ?? theme.spacing.l,
+        top: topSpacing ?? theme.spacing.xl,
+        bottom: bottomSpacing ?? theme.spacing.xl,
       ),
-      child: Divider(
-        color: theme.borderColorScheme.primary,
-      ),
+      child: const AFDivider(),
     );
   }
 }

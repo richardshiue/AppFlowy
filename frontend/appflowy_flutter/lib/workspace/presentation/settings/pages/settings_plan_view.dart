@@ -12,7 +12,6 @@ import 'package:appflowy/workspace/application/settings/plan/workspace_subscript
 import 'package:appflowy/workspace/application/settings/plan/workspace_usage_ext.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/settings_plan_comparison_dialog.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/flowy_gradient_button.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
 import 'package:appflowy/workspace/presentation/widgets/toggle/toggle.dart';
 import 'package:appflowy_backend/protobuf/flowy-user/user_profile.pb.dart';
 import 'package:appflowy_backend/protobuf/flowy-user/workspace.pb.dart';
@@ -83,9 +82,7 @@ class _SettingsPlanViewState extends State<SettingsPlanView> {
 
               return ErrorWidget.withDetails(message: 'Something went wrong!');
             },
-            ready: (state) => SettingsBody(
-              autoSeparate: false,
-              title: LocaleKeys.settings_planPage_title.tr(),
+            ready: (state) => Column(
               children: [
                 _PlanUsageSummary(
                   usage: state.workspaceUsage,

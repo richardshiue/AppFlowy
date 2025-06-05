@@ -3,8 +3,6 @@ import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/copy_and_paste/clipboard_service.dart';
 import 'package:appflowy/shared/af_role_pb_extension.dart';
 import 'package:appflowy/startup/startup.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_category_spacer.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/members/invitation/invite_member_by_email.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/members/invitation/invite_member_by_link.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/members/workspace_member_bloc.dart';
@@ -32,6 +30,8 @@ class WorkspaceMembersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
+
     return BlocProvider<WorkspaceMemberBloc>(
       create: (context) => WorkspaceMemberBloc(userProfile: userProfile)
         ..add(const WorkspaceMemberEvent.initial())
@@ -39,19 +39,13 @@ class WorkspaceMembersPage extends StatelessWidget {
       child: BlocConsumer<WorkspaceMemberBloc, WorkspaceMemberState>(
         listener: _showResultDialog,
         builder: (context, state) {
-          return SettingsBody(
-            title: LocaleKeys.settings_appearance_members_title.tr(),
-            // Enable it when the backend support admin panel
-            // descriptionBuilder: _buildDescription,
-            autoSeparate: false,
+          return Column(
+            spacing: theme.spacing.xl,
             children: [
               if (state.myRole.canInvite) ...[
                 const InviteMemberByLink(),
-                const SettingsCategorySpacer(),
                 const InviteMemberByEmail(),
-                const SettingsCategorySpacer(
-                  bottomSpacing: 0,
-                ),
+                VSpace(40.0 - 2 * theme.spacing.xl), // offset column spacing
               ],
               if (state.members.isNotEmpty)
                 _MemberList(
@@ -65,43 +59,6 @@ class WorkspaceMembersPage extends StatelessWidget {
       ),
     );
   }
-
-  // Enable it when the backend support admin panel
-  // Widget _buildDescription(BuildContext context) {
-  //   final theme = AppFlowyTheme.of(context);
-  //   return Text.rich(
-  //     TextSpan(
-  //       children: [
-  //         TextSpan(
-  //           text:
-  //               '${LocaleKeys.settings_appearance_members_memberPageDescription1.tr()} ',
-  //           style: theme.textStyle.caption.standard(
-  //             color: theme.textColorScheme.secondary,
-  //           ),
-  //         ),
-  //         TextSpan(
-  //           text: LocaleKeys.settings_appearance_members_adminPanel.tr(),
-  //           style: theme.textStyle.caption.underline(
-  //             color: theme.textColorScheme.secondary,
-  //           ),
-  //           mouseCursor: SystemMouseCursors.click,
-  //           recognizer: TapGestureRecognizer()
-  //             ..onTap = () async {
-  //               final baseUrl = await getAppFlowyCloudUrl();
-  //               await afLaunchUrlString(baseUrl);
-  //             },
-  //         ),
-  //         TextSpan(
-  //           text:
-  //               ' ${LocaleKeys.settings_appearance_members_memberPageDescription2.tr()} ',
-  //           style: theme.textStyle.caption.standard(
-  //             color: theme.textColorScheme.secondary,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   // Widget _showMemberLimitWarning(
   //   BuildContext context,
@@ -323,6 +280,48 @@ class WorkspaceMembersPage extends StatelessWidget {
   }
 }
 
+// // Enable when the backend supports admin panel
+// class MemberPageDescription extends StatelessWidget {
+//   const MemberPageDescription({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = AppFlowyTheme.of(context);
+//     return Text.rich(
+//       TextSpan(
+//         children: [
+//           TextSpan(
+//             text:
+//                 '${LocaleKeys.settings_appearance_members_memberPageDescription1.tr()} ',
+//             style: theme.textStyle.caption.standard(
+//               color: theme.textColorScheme.secondary,
+//             ),
+//           ),
+//           TextSpan(
+//             text: LocaleKeys.settings_appearance_members_adminPanel.tr(),
+//             style: theme.textStyle.caption.underline(
+//               color: theme.textColorScheme.secondary,
+//             ),
+//             mouseCursor: SystemMouseCursors.click,
+//             recognizer: TapGestureRecognizer()
+//               ..onTap = () async {
+//                 final baseUrl = await getAppFlowyCloudUrl();
+//                 await afLaunchUrlString(baseUrl);
+//               },
+//           ),
+//           TextSpan(
+//             text:
+//                 ' ${LocaleKeys.settings_appearance_members_memberPageDescription2.tr()} ',
+//             style: theme.textStyle.caption.standard(
+//               color: theme.textColorScheme.secondary,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
 class _MemberList extends StatelessWidget {
   const _MemberList({
     required this.members,
@@ -337,11 +336,10 @@ class _MemberList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
+
     return SeparatedColumn(
       crossAxisAlignment: CrossAxisAlignment.start,
-      separatorBuilder: () => Divider(
-        color: theme.borderColorScheme.primary,
-      ),
+      separatorBuilder: () => AFDivider(spacing: theme.spacing.m),
       children: [
         const _MemberListHeader(),
         ...members.map(
@@ -362,37 +360,47 @@ class _MemberListHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
-    return Row(
-      children: [
-        Expanded(
-          flex: 4,
-          child: Text(
-            LocaleKeys.settings_appearance_members_user.tr(),
-            style: theme.textStyle.body.standard(
-              color: theme.textColorScheme.secondary,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: theme.borderColorScheme.primary),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        top: theme.spacing.m,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              LocaleKeys.settings_appearance_members_user.tr(),
+              style: theme.textStyle.body.standard(
+                color: theme.textColorScheme.secondary,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            LocaleKeys.settings_appearance_members_role.tr(),
-            style: theme.textStyle.body.standard(
-              color: theme.textColorScheme.secondary,
+          Expanded(
+            flex: 2,
+            child: Text(
+              LocaleKeys.settings_appearance_members_role.tr(),
+              style: theme.textStyle.body.standard(
+                color: theme.textColorScheme.secondary,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Text(
-            LocaleKeys.settings_accountPage_email_title.tr(),
-            style: theme.textStyle.body.standard(
-              color: theme.textColorScheme.secondary,
+          Expanded(
+            flex: 3,
+            child: Text(
+              LocaleKeys.settings_accountPage_email_title.tr(),
+              style: theme.textStyle.body.standard(
+                color: theme.textColorScheme.secondary,
+              ),
             ),
           ),
-        ),
-        const HSpace(28.0),
-      ],
+          const HSpace(28.0),
+        ],
+      ),
     );
   }
 }

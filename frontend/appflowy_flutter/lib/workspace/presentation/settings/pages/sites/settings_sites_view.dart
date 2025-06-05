@@ -7,7 +7,6 @@ import 'package:appflowy/workspace/presentation/settings/pages/sites/domain/doma
 import 'package:appflowy/workspace/presentation/settings/pages/sites/published_page/published_view_item.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/published_page/published_view_item_header.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/sites/settings_sites_bloc.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_category.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy_backend/log.dart';
@@ -56,9 +55,7 @@ class _SettingsSitesPageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SettingsBody(
-      title: LocaleKeys.settings_sites_title.tr(),
-      autoSeparate: false,
+    return Column(
       children: [
         // Domain / Namespace
         _buildNamespaceCategory(context),

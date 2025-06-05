@@ -2,7 +2,6 @@ import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/user/application/user_service.dart';
 import 'package:appflowy/workspace/application/view/view_ext.dart';
 import 'package:appflowy/workspace/application/view/view_service.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_category.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/single_setting_action.dart';
 import 'package:appflowy_backend/log.dart';
 import 'package:appflowy_backend/protobuf/flowy-folder/view.pb.dart';
@@ -16,19 +15,15 @@ class FixDataWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SettingsCategory(
-      title: LocaleKeys.settings_manageDataPage_data_fixYourData.tr(),
-      children: [
-        SingleSettingAction(
-          labelMaxLines: 4,
-          label: LocaleKeys.settings_manageDataPage_data_fixYourDataDescription
-              .tr(),
-          buttonLabel: LocaleKeys.settings_manageDataPage_data_fixButton.tr(),
-          onPressed: () {
-            WorkspaceDataManager.checkWorkspaceHealth(dryRun: true);
-          },
-        ),
-      ],
+    return SingleSettingAction(
+      label: LocaleKeys.settings_manageDataPage_data_fixYourData.tr(),
+      description:
+          LocaleKeys.settings_manageDataPage_data_fixYourDataDescription.tr(),
+      isCategory: true,
+      buttonLabel: LocaleKeys.settings_manageDataPage_data_fixButton.tr(),
+      onTap: () {
+        WorkspaceDataManager.checkWorkspaceHealth(dryRun: true);
+      },
     );
   }
 }

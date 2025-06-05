@@ -27,6 +27,7 @@ class SettingsCategory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = AppFlowyTheme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -51,7 +52,7 @@ class SettingsCategory extends StatelessWidget {
             if (actions != null) ...actions!,
           ],
         ),
-        const VSpace(16),
+        VSpace(theme.spacing.m),
         if (description?.isNotEmpty ?? false) ...[
           FlowyText.regular(
             description!,
@@ -62,11 +63,10 @@ class SettingsCategory extends StatelessWidget {
           ),
           const VSpace(8),
         ],
-        SeparatedColumn(
+        Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          separatorBuilder: () =>
-              children.length > 1 ? const VSpace(16) : const SizedBox.shrink(),
+          spacing: theme.spacing.xl,
           children: children,
         ),
       ],

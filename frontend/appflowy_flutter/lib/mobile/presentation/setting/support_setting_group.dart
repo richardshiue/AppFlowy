@@ -8,7 +8,7 @@ import 'package:appflowy/mobile/presentation/widgets/widgets.dart';
 import 'package:appflowy/shared/appflowy_cache_manager.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/util/share_log_files.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/fix_data_widget.dart';
+import 'package:appflowy/workspace/presentation/settings/pages/manage_data/fix_data_widget.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';

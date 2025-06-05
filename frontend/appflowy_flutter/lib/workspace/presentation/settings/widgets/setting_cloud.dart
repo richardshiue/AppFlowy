@@ -7,10 +7,10 @@ import 'package:appflowy/mobile/presentation/widgets/widgets.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/workspace/application/settings/cloud_setting_bloc.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/af_dropdown_menu_entry.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_dropdown.dart';
 import 'package:appflowy/workspace/presentation/settings/widgets/setting_local_cloud.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
+import 'package:appflowy_ui/appflowy_ui.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flowy_infra_ui/flowy_infra_ui.dart';
@@ -41,9 +41,10 @@ class SettingCloud extends StatelessWidget {
             create: (context) => CloudSettingBloc(cloudType),
             child: BlocBuilder<CloudSettingBloc, CloudSettingState>(
               builder: (context, state) {
-                return SettingsBody(
-                  title: LocaleKeys.settings_menu_cloudSettings.tr(),
-                  autoSeparate: false,
+                return SeparatedColumn(
+                  separatorBuilder: () => AFDivider(
+                    spacing: AppFlowyTheme.of(context).spacing.xl,
+                  ),
                   children: [
                     if (Env.enableCustomCloud)
                       _CloudServerSwitcher(cloudType: state.cloudType),

@@ -21,7 +21,6 @@ import 'package:appflowy/workspace/presentation/settings/shared/af_dropdown_menu
 import 'package:appflowy/workspace/presentation/settings/shared/document_color_setting_button.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/setting_action.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/setting_list_tile.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_category.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_category_spacer.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_dashed_divider.dart';
@@ -82,10 +81,7 @@ class SettingsWorkspaceView extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          return SettingsBody(
-            title: LocaleKeys.settings_workspacePage_title.tr(),
-            description: LocaleKeys.settings_workspacePage_description.tr(),
-            autoSeparate: false,
+          return Column(
             children: [
               // We don't allow changing workspace name/icon for local/offline
               if (userProfile.workspaceType != WorkspaceTypePB.LocalW) ...[
@@ -184,9 +180,7 @@ class SettingsWorkspaceView extends StatelessWidget {
                 SingleSettingAction(
                   label: LocaleKeys.settings_workspacePage_manageWorkspace_title
                       .tr(),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  onPressed: () => showConfirmDialog(
+                  onTap: () => showConfirmDialog(
                     context: context,
                     title: currentWorkspaceMemberRole?.isOwner ?? false
                         ? LocaleKeys
@@ -209,7 +203,7 @@ class SettingsWorkspaceView extends StatelessWidget {
                               : const WorkspaceSettingsEvent.leaveWorkspace(),
                         ),
                   ),
-                  buttonType: SingleSettingsButtonType.danger,
+                  isDestructive: true,
                   buttonLabel: currentWorkspaceMemberRole?.isOwner ?? false
                       ? LocaleKeys
                           .settings_workspacePage_manageWorkspace_deleteWorkspace

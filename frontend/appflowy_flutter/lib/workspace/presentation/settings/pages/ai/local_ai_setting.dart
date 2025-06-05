@@ -1,10 +1,10 @@
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/workspace/application/settings/ai/local_ai_bloc.dart';
+import 'package:appflowy/workspace/presentation/settings/shared/setting_list_tile.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy/workspace/presentation/widgets/toggle/toggle.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expandable/expandable.dart';
-import 'package:flowy_infra_ui/style_widget/text.dart';
 import 'package:flowy_infra_ui/widget/spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -70,24 +70,10 @@ class LocalAiSettingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FlowyText.medium(
-                LocaleKeys.settings_aiPage_keys_localAIToggleTitle.tr(),
-              ),
-              const VSpace(4),
-              FlowyText(
-                LocaleKeys.settings_aiPage_keys_localAIToggleSubTitle.tr(),
-                maxLines: 3,
-                fontSize: 12,
-              ),
-            ],
-          ),
-        ),
+    return SettingListTile(
+      label: LocaleKeys.settings_aiPage_keys_localAIToggleTitle.tr(),
+      description: LocaleKeys.settings_aiPage_keys_localAIToggleSubTitle.tr(),
+      trailing: [
         Toggle(
           value: isEnabled,
           onChanged: (value) {

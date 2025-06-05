@@ -8,19 +8,48 @@ import 'package:appflowy/workspace/application/settings/share/export_service.dar
 import 'package:appflowy/workspace/presentation/home/toast.dart';
 import 'package:appflowy_backend/dispatch/dispatch.dart';
 import 'package:appflowy_backend/log.dart';
-import 'package:appflowy_backend/protobuf/flowy-error/errors.pbserver.dart';
-import 'package:appflowy_backend/protobuf/flowy-folder/view.pb.dart';
-import 'package:appflowy_backend/protobuf/flowy-folder/workspace.pb.dart';
+import 'package:appflowy_backend/protobuf/flowy-error/protobuf.dart';
+import 'package:appflowy_backend/protobuf/flowy-folder/protobuf.dart';
 import 'package:appflowy_result/appflowy_result.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flowy_infra/file_picker/file_picker_service.dart';
 import 'package:flowy_infra/theme_extension.dart';
-import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../../generated/locale_keys.g.dart';
+import '../../shared/single_setting_action.dart';
+
+class SettingsExportFileWidget extends StatelessWidget {
+  const SettingsExportFileWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleSettingAction(
+      label: LocaleKeys.settings_files_exportData.tr(),
+      buttonLabel: LocaleKeys.settings_files_export.tr(),
+      isCategory: true,
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return const FlowyDialog(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
+                ),
+                child: FileExporterWidget(),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 class FileExporterWidget extends StatefulWidget {
   const FileExporterWidget({super.key});

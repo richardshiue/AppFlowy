@@ -8,12 +8,8 @@ import 'package:appflowy/shared/appflowy_cache_manager.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/util/share_log_files.dart';
 import 'package:appflowy/workspace/application/settings/setting_file_importer_bloc.dart';
-import 'package:appflowy/workspace/presentation/home/toast.dart';
-import 'package:appflowy/workspace/presentation/settings/pages/fix_data_widget.dart';
-import 'package:appflowy/workspace/presentation/settings/shared/settings_body.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/settings_category.dart';
 import 'package:appflowy/workspace/presentation/settings/shared/single_setting_action.dart';
-import 'package:appflowy/workspace/presentation/settings/widgets/files/settings_export_file_widget.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialog_v2.dart';
 import 'package:appflowy/workspace/presentation/widgets/dialogs.dart';
 import 'package:appflowy_backend/protobuf/flowy-user/protobuf.dart';
@@ -26,9 +22,9 @@ import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
-import '../shared/setting_action.dart';
+import 'fix_data_widget.dart';
+import 'settings_export_file_widget.dart';
 
 class SettingsManageDataView extends StatelessWidget {
   const SettingsManageDataView({
@@ -42,6 +38,7 @@ class SettingsManageDataView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
     return BlocProvider<DataLocationBloc>(
       create: (_) => DataLocationBloc(
         repository: const RustSettingsRepositoryImpl(),
@@ -61,134 +58,150 @@ class SettingsManageDataView extends StatelessWidget {
               workspace.workspaceType == WorkspaceTypePB.ServerW;
           final path = state.userDataLocation?.path;
 
-          return SettingsBody(
-            title: LocaleKeys.settings_manageDataPage_title.tr(),
-            description: LocaleKeys.settings_manageDataPage_description.tr(),
+          return SeparatedColumn(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            separatorBuilder: () => AFDivider(spacing: theme.spacing.xl),
             children: [
-              SettingsCategory(
-                title:
-                    LocaleKeys.settings_manageDataPage_dataStorage_title.tr(),
-                tooltip:
-                    LocaleKeys.settings_manageDataPage_dataStorage_tooltip.tr(),
-                actions: [
-                  if (isCloudWorkspace)
-                    SettingAction(
-                      tooltip: LocaleKeys
-                          .settings_manageDataPage_dataStorage_actions_resetTooltip
-                          .tr(),
-                      icon: const FlowySvg(
-                        FlowySvgs.restore_s,
-                        size: Size.square(20),
-                      ),
-                      label: LocaleKeys.settings_common_reset.tr(),
-                      onPressed: () {
-                        showSimpleAFDialog(
-                          context: context,
-                          title: LocaleKeys
-                              .settings_manageDataPage_dataStorage_resetDialog_title
-                              .tr(),
-                          content: LocaleKeys
-                              .settings_manageDataPage_dataStorage_resetDialog_description
-                              .tr(),
-                          primaryAction: (
-                            LocaleKeys.button_confirm.tr(),
-                            (_) {
-                              context
-                                  .read<DataLocationBloc>()
-                                  .add(DataLocationResetToDefault());
-                            }
-                          ),
-                          secondaryAction: (
-                            LocaleKeys.button_cancel.tr(),
-                            (_) {},
-                          ),
-                        );
-                      },
-                    ),
-                ],
-                children: path == null
-                    ? [
-                        const CircularProgressIndicator(),
-                      ]
-                    : [
-                        _CurrentPath(path: path),
-                        if (isCloudWorkspace) _DataPathActions(path: path),
-                      ],
+              _DataStorageLocation(
+                isCloudWorkspace: isCloudWorkspace,
+                path: path,
               ),
-              SettingsCategory(
-                title: LocaleKeys.settings_manageDataPage_importData_title.tr(),
-                tooltip:
-                    LocaleKeys.settings_manageDataPage_importData_tooltip.tr(),
-                children: const [_ImportDataField()],
-              ),
+              const _ImportDataField(),
               if (kDebugMode) ...[
-                SettingsCategory(
-                  title: LocaleKeys.settings_files_exportData.tr(),
+                Column(
+                  spacing: theme.spacing.xl,
                   children: const [
                     SettingsExportFileWidget(),
                     FixDataWidget(),
                   ],
                 ),
               ],
-              SettingsCategory(
-                title: LocaleKeys.workspace_errorActions_exportLogFiles.tr(),
-                children: [
-                  SingleSettingAction(
-                    labelMaxLines: 4,
-                    label:
-                        LocaleKeys.workspace_errorActions_exportLogFiles.tr(),
-                    buttonLabel: LocaleKeys.settings_files_export.tr(),
-                    onPressed: () {
-                      shareLogFiles(context);
-                    },
-                  ),
-                ],
+              SingleSettingAction(
+                label: LocaleKeys.workspace_errorActions_exportLogFiles.tr(),
+                buttonLabel: LocaleKeys.settings_files_export.tr(),
+                isCategory: true,
+                onTap: () {
+                  shareLogFiles(context);
+                },
               ),
-              SettingsCategory(
-                title: LocaleKeys.settings_manageDataPage_cache_title.tr(),
-                children: [
-                  SingleSettingAction(
-                    labelMaxLines: 4,
-                    label: LocaleKeys.settings_manageDataPage_cache_description
+              SingleSettingAction(
+                label: LocaleKeys.settings_manageDataPage_cache_title.tr(),
+                description:
+                    LocaleKeys.settings_manageDataPage_cache_description.tr(),
+                buttonLabel:
+                    LocaleKeys.settings_manageDataPage_cache_title.tr(),
+                isCategory: true,
+                onTap: () {
+                  showCancelAndConfirmDialog(
+                    context: context,
+                    title: LocaleKeys.settings_manageDataPage_cache_dialog_title
                         .tr(),
-                    buttonLabel:
-                        LocaleKeys.settings_manageDataPage_cache_title.tr(),
-                    onPressed: () {
-                      showCancelAndConfirmDialog(
-                        context: context,
-                        title: LocaleKeys
-                            .settings_manageDataPage_cache_dialog_title
-                            .tr(),
-                        description: LocaleKeys
-                            .settings_manageDataPage_cache_dialog_description
-                            .tr(),
-                        confirmLabel: LocaleKeys.button_ok.tr(),
-                        onConfirm: (_) async {
-                          // clear all cache
-                          await getIt<FlowyCacheManager>().clearAllCache();
+                    description: LocaleKeys
+                        .settings_manageDataPage_cache_dialog_description
+                        .tr(),
+                    confirmLabel: LocaleKeys.button_ok.tr(),
+                    onConfirm: (_) async {
+                      // clear all cache
+                      await getIt<FlowyCacheManager>().clearAllCache();
 
-                          // check the workspace and space health
-                          await WorkspaceDataManager.checkViewHealth(
-                            dryRun: false,
-                          );
-
-                          if (context.mounted) {
-                            showToastNotification(
-                              message: LocaleKeys
-                                  .settings_manageDataPage_cache_dialog_successHint
-                                  .tr(),
-                            );
-                          }
-                        },
+                      // check the workspace and space health
+                      await WorkspaceDataManager.checkViewHealth(
+                        dryRun: false,
                       );
+
+                      if (context.mounted) {
+                        showToastNotification(
+                          message: LocaleKeys
+                              .settings_manageDataPage_cache_dialog_successHint
+                              .tr(),
+                        );
+                      }
                     },
-                  ),
-                ],
+                  );
+                },
               ),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+class _DataStorageLocation extends StatelessWidget {
+  const _DataStorageLocation({
+    required this.isCloudWorkspace,
+    required this.path,
+  });
+
+  final bool isCloudWorkspace;
+  final String? path;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = AppFlowyTheme.of(context);
+    return SettingsCategory(
+      title: LocaleKeys.settings_manageDataPage_dataStorage_title.tr(),
+      tooltip: LocaleKeys.settings_manageDataPage_dataStorage_tooltip.tr(),
+      actions: [
+        if (isCloudWorkspace)
+          FlowyTooltip(
+            message: LocaleKeys
+                .settings_manageDataPage_dataStorage_actions_resetTooltip
+                .tr(),
+            child: AFGhostButton.normal(
+              builder: (context, isHovering, disabled) {
+                return Row(
+                  children: [
+                    const FlowySvg(
+                      FlowySvgs.restore_s,
+                      size: Size.square(20),
+                    ),
+                    HSpace(theme.spacing.s),
+                    Text(
+                      LocaleKeys.settings_common_reset.tr(),
+                      style: theme.textStyle.body.enhanced(
+                        color: theme.textColorScheme.primary,
+                      ),
+                      maxLines: 1,
+                    ),
+                  ],
+                );
+              },
+              onTap: () {
+                showSimpleAFDialog(
+                  context: context,
+                  title: LocaleKeys
+                      .settings_manageDataPage_dataStorage_resetDialog_title
+                      .tr(),
+                  content: LocaleKeys
+                      .settings_manageDataPage_dataStorage_resetDialog_description
+                      .tr(),
+                  primaryAction: (
+                    LocaleKeys.button_confirm.tr(),
+                    (_) {
+                      context
+                          .read<DataLocationBloc>()
+                          .add(DataLocationResetToDefault());
+                    }
+                  ),
+                  secondaryAction: (
+                    LocaleKeys.button_cancel.tr(),
+                    (_) {},
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+      children: path == null
+          ? [
+              const CircularProgressIndicator(),
+            ]
+          : [
+              _CurrentPath(path: path!),
+              if (isCloudWorkspace) _DataPathActions(path: path!),
+            ],
     );
   }
 }
@@ -268,27 +281,8 @@ class SettingsManageDataView extends StatelessWidget {
 //   }
 // }
 
-class _ImportDataField extends StatefulWidget {
+class _ImportDataField extends StatelessWidget {
   const _ImportDataField();
-
-  @override
-  State<_ImportDataField> createState() => _ImportDataFieldState();
-}
-
-class _ImportDataFieldState extends State<_ImportDataField> {
-  final _fToast = FToast();
-
-  @override
-  void initState() {
-    super.initState();
-    _fToast.init(context);
-  }
-
-  @override
-  void dispose() {
-    _fToast.removeQueuedCustomToasts();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -298,17 +292,23 @@ class _ImportDataFieldState extends State<_ImportDataField> {
         listenWhen: (previous, current) =>
             previous.successOrFail != current.successOrFail,
         listener: (_, state) => state.successOrFail?.fold(
-          (_) => _showToast(LocaleKeys.settings_menu_importSuccess.tr()),
-          (_) => _showToast(LocaleKeys.settings_menu_importFailed.tr()),
+          (_) => showToastNotification(
+            message: LocaleKeys.settings_menu_importSuccess.tr(),
+          ),
+          (_) => showToastNotification(
+            message: LocaleKeys.settings_menu_importFailed.tr(),
+            type: ToastificationType.error,
+          ),
         ),
         builder: (context, state) {
           return SingleSettingAction(
-            label:
+            label: LocaleKeys.settings_manageDataPage_importData_title.tr(),
+            description:
                 LocaleKeys.settings_manageDataPage_importData_description.tr(),
-            labelMaxLines: 2,
+            isCategory: true,
             buttonLabel:
                 LocaleKeys.settings_manageDataPage_importData_action.tr(),
-            onPressed: () async {
+            onTap: () async {
               final path = await getIt<FilePickerService>().getDirectoryPath();
               if (path == null || !context.mounted) {
                 return;
@@ -321,13 +321,6 @@ class _ImportDataFieldState extends State<_ImportDataField> {
           );
         },
       ),
-    );
-  }
-
-  void _showToast(String message) {
-    _fToast.showToast(
-      child: FlowyMessageToast(message: message),
-      gravity: ToastGravity.CENTER,
     );
   }
 }
